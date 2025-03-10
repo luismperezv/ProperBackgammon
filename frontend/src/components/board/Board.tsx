@@ -41,6 +41,52 @@ export const Board = () => {
     return () => resizeObserver.disconnect()
   }, [])
 
+  // Helper function to create point columns with triangles
+  const createPointColumns = (startNum: number, count: number, reverse = false, isTopRow = false) => {
+    const points = Array.from({ length: count }, (_, index) => {
+      const pointNumber = reverse 
+        ? startNum + count - 1 - index 
+        : startNum + index
+      
+      // Alternate colors based on point number
+      const isEven = pointNumber % 2 === 0
+      const triangleColor = isEven ? '#E8D0AA' : '#2F1810' // Light wood / Dark wood
+
+      return (
+        <Box
+          key={pointNumber}
+          id={`point-${pointNumber}`}
+          sx={{
+            width: `${100 / 6}%`,
+            height: '100%',
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column',
+            ...(isTopRow ? { justifyContent: 'flex-start' } : { justifyContent: 'flex-end' }),
+            '&::before': {
+              content: '""',
+              position: 'relative',
+              width: '100%',
+              height: '80%',
+              clipPath: isTopRow
+                ? 'polygon(0% 0%, 50% 100%, 100% 0%)'
+                : 'polygon(0% 100%, 50% 0%, 100% 100%)',
+              backgroundColor: triangleColor,
+              transition: 'background-color 0.3s ease',
+            },
+          }}
+        />
+      )
+    })
+    return points
+  }
+
+  const barAndHomeStyle = {
+    width: '8%',
+    height: '100%',
+    bgcolor: '#251209', // Darker wood color for bar and homes
+  }
+
   return (
     <Box
       ref={containerRef}
@@ -61,9 +107,87 @@ export const Board = () => {
           boxShadow: 3,
           position: 'relative',
           overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
-        {/* Board content will go here */}
+        {/* Top row (13-24) */}
+        <Box
+          id="13-24"
+          sx={{
+            flex: 1,
+            borderBottom: '2px solid rgba(255, 255, 255, 0.3)',
+            display: 'flex',
+          }}
+        >
+          <Box
+            id="13-18"
+            sx={{
+              width: '42%',
+              height: '100%',
+              display: 'flex',
+            }}
+          >
+            {createPointColumns(13, 6, false, true)}
+          </Box>
+          <Box
+            id="black-bar"
+            sx={barAndHomeStyle}
+          />
+          <Box
+            id="19-24"
+            sx={{
+              width: '42%',
+              height: '100%',
+              display: 'flex',
+            }}
+          >
+            {createPointColumns(19, 6, false, true)}
+          </Box>
+          <Box
+            id="white-home"
+            sx={barAndHomeStyle}
+          />
+        </Box>
+
+        {/* Bottom row (01-12) */}
+        <Box
+          id="01-12"
+          sx={{
+            flex: 1,
+            borderTop: '2px solid rgba(255, 255, 255, 0.3)',
+            display: 'flex',
+          }}
+        >
+          <Box
+            id="07-12"
+            sx={{
+              width: '42%',
+              height: '100%',
+              display: 'flex',
+            }}
+          >
+            {createPointColumns(7, 6, true, false)}
+          </Box>
+          <Box
+            id="white-bar"
+            sx={barAndHomeStyle}
+          />
+          <Box
+            id="01-06"
+            sx={{
+              width: '42%',
+              height: '100%',
+              display: 'flex',
+            }}
+          >
+            {createPointColumns(1, 6, true, false)}
+          </Box>
+          <Box
+            id="black-home"
+            sx={barAndHomeStyle}
+          />
+        </Box>
       </Box>
     </Box>
   )
