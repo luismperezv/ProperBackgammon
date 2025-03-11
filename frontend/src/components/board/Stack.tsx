@@ -6,10 +6,11 @@ export interface StackProps {
   color: 'white' | 'black'
   isTopRow?: boolean
   pointNumber: number
+  boardWidth: number
   onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void
 }
 
-export const Stack = ({ count, color, isTopRow = false, pointNumber, onDragStart }: StackProps) => {
+export const Stack = ({ count, color, isTopRow = false, pointNumber, boardWidth, onDragStart }: StackProps) => {
   // Each piece will overlap the previous one by 30%
   const pieceHeight = 20 // Base height percentage
   const overlap = 0.3 // 30% overlap
@@ -46,6 +47,7 @@ export const Stack = ({ count, color, isTopRow = false, pointNumber, onDragStart
           <Piece 
             color={color} 
             pointNumber={pointNumber}
+            boardWidth={boardWidth}
             onDragStart={onDragStart}
           />
           {/* Show count on the last visible piece if there are more pieces */}

@@ -169,6 +169,7 @@ export const Board = () => {
               color={pointState.color}
               isTopRow={isTopRow}
               pointNumber={pointNumber}
+              boardWidth={dimensions.width}
             />
           )}
         </Box>
@@ -240,6 +241,7 @@ export const Board = () => {
                 color="black"
                 isTopRow={true}
                 pointNumber={-1}
+                boardWidth={dimensions.width}
               />
             )}
           </Box>
@@ -266,6 +268,7 @@ export const Board = () => {
                 color="white"
                 isTopRow={true}
                 pointNumber={25}
+                boardWidth={dimensions.width}
               />
             )}
           </Box>
@@ -303,6 +306,7 @@ export const Board = () => {
                 color="white"
                 isTopRow={false}
                 pointNumber={-1}
+                boardWidth={dimensions.width}
               />
             )}
           </Box>
@@ -329,6 +333,7 @@ export const Board = () => {
                 color="black"
                 isTopRow={false}
                 pointNumber={26}
+                boardWidth={dimensions.width}
               />
             )}
           </Box>
