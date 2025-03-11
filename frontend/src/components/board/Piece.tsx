@@ -2,11 +2,23 @@ import { Box } from '@mui/material'
 
 export interface PieceProps {
   color: 'white' | 'black'
+  pointNumber: number
+  onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void
 }
 
-export const Piece = ({ color }: PieceProps) => {
+export const Piece = ({ color, pointNumber, onDragStart }: PieceProps) => {
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+    e.dataTransfer.setData('text/plain', JSON.stringify({
+      color,
+      fromPoint: pointNumber
+    }))
+    if (onDragStart) onDragStart(e)
+  }
+
   return (
     <Box
+      draggable
+      onDragStart={handleDragStart}
       sx={{
         width: '90%',
         paddingBottom: '90%', // Makes it a perfect circle
@@ -16,6 +28,10 @@ export const Piece = ({ color }: PieceProps) => {
         position: 'absolute',
         left: '5%', // Centers the piece horizontally (100% - 90%) / 2
         zIndex: 1,
+        cursor: 'grab',
+        '&:active': {
+          cursor: 'grabbing',
+        },
       }}
     />
   )

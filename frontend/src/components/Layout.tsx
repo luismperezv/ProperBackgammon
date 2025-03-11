@@ -1,6 +1,7 @@
 import { ReactNode } from 'react'
 import { Box, AppBar, Toolbar, Typography, Container } from '@mui/material'
 import { Link as RouterLink } from 'react-router-dom'
+import { DebugTools } from './debug/DebugTools'
 
 interface LayoutProps {
   children: ReactNode
@@ -28,6 +29,7 @@ function Layout({ children }: LayoutProps) {
       <Container component="main" sx={{ mt: 4, mb: 4, flex: 1 }}>
         {children}
       </Container>
+      {import.meta.env.DEV && <DebugTools />}
     </Box>
   )
 }
