@@ -1,5 +1,6 @@
 import { Box } from '@mui/material'
 import { useEffect, useRef, useState } from 'react'
+import Stack from './Stack'
 
 const GOLDEN_RATIO = 1.618033988749895
 
@@ -50,7 +51,22 @@ export const Board = () => {
       
       // Alternate colors based on point number
       const isEven = pointNumber % 2 === 0
-      const triangleColor = isEven ? '#E8D0AA' : '#2F1810' // Light wood / Dark wood
+      const triangleColor = isEven ? '#E8D0AA' : '#4A2511' // Light wood / Lighter dark wood
+
+      // Calculate piece count for each point
+      let pieceCount = 0
+      let pieceColor: 'white' | 'black' = 'white'
+
+      // Bottom row points 1-12: increasing white pieces
+      if (pointNumber >= 1 && pointNumber <= 12) {
+        pieceCount = pointNumber
+        pieceColor = 'white'
+      }
+      // Top row points 13-24: decreasing black pieces
+      else if (pointNumber >= 13 && pointNumber <= 24) {
+        pieceCount = 24 - pointNumber + 13
+        pieceColor = 'black'
+      }
 
       return (
         <Box
@@ -75,7 +91,15 @@ export const Board = () => {
               transition: 'background-color 0.3s ease',
             },
           }}
-        />
+        >
+          {pieceCount > 0 && (
+            <Stack 
+              count={pieceCount} 
+              color={pieceColor} 
+              isTopRow={isTopRow}
+            />
+          )}
+        </Box>
       )
     })
     return points
@@ -84,7 +108,7 @@ export const Board = () => {
   const barAndHomeStyle = {
     width: '8%',
     height: '100%',
-    bgcolor: '#251209', // Darker wood color for bar and homes
+    bgcolor: '#3A1D0E', // Lighter dark wood color for bar and homes
   }
 
   return (
