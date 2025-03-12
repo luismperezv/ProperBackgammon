@@ -48,6 +48,12 @@ export const Stack = ({ count, color, isTopRow = false, pointNumber, boardWidth,
     setTempCount(count)
   }
 
+  // Calculate if this stack needs to overflow the board
+  const isEdgePoint = pointNumber === 1 || pointNumber === 6 || 
+                     pointNumber === 7 || pointNumber === 12 ||
+                     pointNumber === 13 || pointNumber === 18 ||
+                     pointNumber === 19 || pointNumber === 24
+
   return (
     <Box
       sx={{
@@ -57,7 +63,10 @@ export const Stack = ({ count, color, isTopRow = false, pointNumber, boardWidth,
         display: 'flex',
         flexDirection: 'column',
         ...(isTopRow ? { alignItems: 'flex-start' } : { alignItems: 'flex-end' }),
-        overflow: 'visible', // Ensure no clipping
+        ...(isEdgePoint && {
+          zIndex: 2,
+          overflow: 'visible',
+        }),
       }}
     >
       {Array.from({ length: visibleCount }, (_, index) => {
@@ -91,6 +100,9 @@ export const Stack = ({ count, color, isTopRow = false, pointNumber, boardWidth,
               position: 'absolute',
               ...position,
               visibility: shouldHide ? 'hidden' : 'visible',
+              ...(isEdgePoint && {
+                zIndex: 2,
+              }),
             }}
           />
         ) : (
@@ -111,7 +123,10 @@ export const Stack = ({ count, color, isTopRow = false, pointNumber, boardWidth,
                 left: '50%',
                 transform: 'translate(-50%, -50%)',
                 cursor: index === 0 ? 'default' : 'grab'
-              })
+              }),
+              ...(isEdgePoint && {
+                zIndex: 2,
+              }),
             }}
           >
             {!isHome && (

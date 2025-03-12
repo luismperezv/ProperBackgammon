@@ -24,6 +24,7 @@ interface GameStore {
 
   // Game state
   gameState: GameState;
+  currentGameId: string | null;
   currentPlayer: PlayerColor;
   isGameStarted: boolean;
   isGameOver: boolean;
@@ -59,7 +60,7 @@ interface GameStore {
   endMatch: () => void;
   
   // Game actions
-  startNewGame: () => void;
+  startNewGame: () => Promise<void>;
   resignGame: (type: ResignationType) => void;
   calculateGameScore: () => GameScore;
   
@@ -69,7 +70,7 @@ interface GameStore {
   rejectDouble: () => void;
   
   // Turn actions
-  rollDice: () => void;
+  rollDice: (diceValues?: [number, number]) => void;
   makeMove: (from: number, to: number) => void;
   selectPoint: (pointNumber: number | null) => void;
   undoLastMove: () => void;
@@ -82,7 +83,7 @@ interface GameStore {
   // State sync
   updateGameState: (newState: GameState) => void;
   updateMatchScore: (white: number, black: number) => void;
-  updatePoint: (pointNumber: number, newState: PointState) => void;
+  setCurrentGameId: (gameId: string) => void;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -93,7 +94,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
   matchWinner: null,
 
   // Initial game state
-  gameState: INITIAL_POSITION,
+  gameState: {
+    points: {},
+    bar: { white: 0, black: 0 },
+    home: { white: 0, black: 0 }
+  },
+  currentGameId: null,
   currentPlayer: 'white',
   isGameStarted: false,
   isGameOver: false,
@@ -114,19 +120,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
   // Initial Crawford state
   isCrawfordGame: false,
   postCrawford: false,
-  
-  // Default game rules
   gameRules: {
-    isCrawfordRule: true,
-    isJacobyRule: true,
-    automaticDoubles: true,
-    maximumCube: 64
+    allowDoubling: true,
+    crawford: true,
+    jacoby: false,
+    automaticDoubles: false
   },
 
   // Initial time control
   timeControl: null,
 
-  // Initial gammon potential
+  // Initial gammon tracking
   potentialGammon: false,
   potentialBackgammon: false,
 
@@ -134,63 +138,49 @@ export const useGameStore = create<GameStore>((set, get) => ({
   startMatch: (matchLength, rules, timeControl) => {
     set({
       matchLength,
-      matchScore: { white: 0, black: 0 },
+      gameRules: { ...get().gameRules, ...rules },
+      timeControl: timeControl || null,
       isMatchOver: false,
       matchWinner: null,
-      gameRules: { ...get().gameRules, ...rules },
-      timeControl: timeControl || null
+      matchScore: { white: 0, black: 0 }
     });
-    get().startNewGame();
   },
 
   endMatch: () => {
     set({
       isMatchOver: true,
-      isGameStarted: false,
-      timeControl: null
+      matchWinner: get().matchScore.white >= get().matchLength ? 'white' : 'black'
     });
   },
 
   // Game actions
-  startNewGame: () => {
-    const { matchScore, matchLength, gameRules } = get();
-    
-    // Check for Crawford game
-    const isCrawfordGame = gameRules.isCrawfordRule && 
-      (matchScore.white === matchLength - 1 || matchScore.black === matchLength - 1) &&
-      !get().postCrawford;
-
-    set({
-      gameState: INITIAL_POSITION,
-      currentPlayer: 'white',
-      isGameStarted: true,
-      isGameOver: false,
-      gameWinner: null,
-      doublingCubeValue: 1,
-      doublingCubeOwner: 'center',
-      canDouble: !isCrawfordGame,
-      wasDoubleOffered: false,
-      dice: [],
-      canRoll: true,
-      validMoves: [],
-      selectedPoint: null,
-      isCrawfordGame,
-      potentialGammon: false,
-      potentialBackgammon: false
-    });
-
-    if (get().timeControl) {
-      const tc = get().timeControl;
-      if (!tc) return;  // Extra safety check after reassignment
-      
-      const newTimeControl: TimeControl = {
-        initialTime: tc.initialTime,
-        increment: tc.increment,
-        timeLeft: { white: tc.initialTime, black: tc.initialTime },
-        isClockRunning: false,
-        activePlayer: null
-      };
-      set({ timeControl: newTimeControl });
+  startNewGame: async () => {
+    try {
+      const response = await fetch('/api/game', {
+        method: 'POST',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to create new game');
+      }
+      const game = await response.json();
+      set({
+        currentGameId: game.id,
+        gameState: game.state,
+        isGameStarted: true,
+        isGameOver: false,
+        gameWinner: null,
+        currentPlayer: 'white',
+        dice: [],
+        canRoll: true,
+        validMoves: [],
+        selectedPoint: null,
+        doublingCubeValue: 1,
+        doublingCubeOwner: 'center',
+        canDouble: true,
+        wasDoubleOffered: false,
+      });
+    } catch (error) {
+      console.error('Error starting new game:', error);
     }
   },
 
@@ -260,10 +250,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   // Turn actions
-  rollDice: () => {
+  rollDice: (diceValues?: [number, number]) => {
     if (!get().canRoll) return;
     
-    const dice = [
+    const dice = diceValues || [
       Math.floor(Math.random() * 6) + 1,
       Math.floor(Math.random() * 6) + 1
     ];
@@ -355,50 +345,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
   },
 
-  updatePoint: (pointNumber: number, newState: PointState) => {
-    const currentState = get().gameState;
-    
-    // Handle bar and home points
-    if (pointNumber === -1) { // Bar
-      set({
-        gameState: {
-          ...currentState,
-          bar: {
-            ...currentState.bar,
-            [newState.color]: newState.count
-          }
-        }
-      });
-    } else if (pointNumber === 25) { // White home
-      set({
-        gameState: {
-          ...currentState,
-          home: {
-            ...currentState.home,
-            white: newState.count
-          }
-        }
-      });
-    } else if (pointNumber === 26) { // Black home
-      set({
-        gameState: {
-          ...currentState,
-          home: {
-            ...currentState.home,
-            black: newState.count
-          }
-        }
-      });
-    } else { // Regular points
-      set({
-        gameState: {
-          ...currentState,
-          points: {
-            ...currentState.points,
-            [pointNumber]: newState.count > 0 ? newState : null
-          }
-        }
-      });
-    }
-  }
+  setCurrentGameId: (gameId: string) => {
+    set({ currentGameId: gameId });
+  },
 })); 

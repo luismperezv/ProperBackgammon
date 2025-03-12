@@ -2,30 +2,51 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import datetime
 import time
+from app.api import api_router
+from app.models import init_db
+from app.core.config import settings
+from app.core.errors import AppError, error_handler
 
-START_TIME = time.time()
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title=settings.PROJECT_NAME,
+        version=settings.VERSION
+    )
 
-app = FastAPI(title="Backgammon Game API")
+    # Initialize database
+    init_db()
 
-# Configure CORS - more permissive in development
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins in development
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["*"]
-)
+    # Configure CORS
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.BACKEND_CORS_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # Add error handlers
+    app.add_exception_handler(AppError, error_handler)
+
+    # Include the API router
+    app.include_router(api_router, prefix=settings.API_V1_STR)
+
+    return app
+
+app = create_app()
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to Backgammon Game API"}
+    return {
+        "message": f"Welcome to {settings.PROJECT_NAME}",
+        "version": settings.VERSION
+    }
 
 @app.get("/api")
 async def api_root():
     return {
         "status": "ok",
-        "version": "1.0.0",
+        "version": settings.VERSION,
         "endpoints": [
             "/api/health",
             "/api/game"
@@ -37,12 +58,18 @@ async def health_check():
     try:
         return {
             "status": "healthy",
-            "timestamp": str(datetime.datetime.now()),
-            "uptime": str(time.time() - START_TIME)
+            "timestamp": datetime.datetime.now().isoformat(),
+            "uptime": time.time() - START_TIME,
+            "version": settings.VERSION
         }
     except Exception as e:
-        print(f"Health check error: {str(e)}")
-        return {"status": "error", "message": str(e)}
+        raise AppError(
+            status_code=500,
+            message="Health check failed",
+            details={"error": str(e)}
+        )
+
+START_TIME = time.time()
 
 @app.get("/api/game")
 async def list_games():

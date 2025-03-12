@@ -1,8 +1,13 @@
 import { Box, Typography } from '@mui/material'
 import { useGameStore } from '../../store/gameStore'
 
-export const DiceDisplay = () => {
-  const { dice } = useGameStore()
+interface DiceDisplayProps {
+  boardWidth: number
+}
+
+export const DiceDisplay = ({ boardWidth }: DiceDisplayProps) => {
+  const { dice, currentPlayer } = useGameStore()
+  const diceSize = boardWidth * 0.05 // Match piece size (5% of board width)
 
   if (!dice || dice.length === 0) {
     return null
@@ -12,29 +17,27 @@ export const DiceDisplay = () => {
     <Box
       sx={{
         display: 'flex',
-        gap: 2,
+        gap: 3,
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '8px 16px',
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        borderRadius: '8px',
       }}
     >
       {dice.map((value, index) => (
         <Typography
           key={index}
           sx={{
-            fontSize: '1.5rem',
+            fontSize: `${diceSize * 0.6}px`, // Scale font size relative to dice size
             fontWeight: 'bold',
-            color: 'white',
-            width: '40px',
-            height: '40px',
+            color: currentPlayer === 'black' ? '#FFFFFF' : '#1A1A1A',
+            width: `${diceSize}px`,
+            height: `${diceSize}px`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: 'primary.main',
-            borderRadius: '8px',
-            boxShadow: (theme) => `0 2px 4px ${theme.palette.primary.main}40`,
+            backgroundColor: currentPlayer === 'black' ? '#1A1A1A' : '#FFFFFF',
+            borderRadius: '12px',
+            boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+            transition: 'all 0.2s ease-in-out',
           }}
         >
           {value}

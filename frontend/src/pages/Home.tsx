@@ -4,9 +4,16 @@ import { useNavigate } from 'react-router-dom'
 function Home() {
   const navigate = useNavigate()
 
-  const handleCreateGame = () => {
-    // TODO: Implement game creation logic
-    navigate('/game/new')
+  const handleCreateGame = async () => {
+    try {
+      const response = await fetch('/api/game', {
+        method: 'POST',
+      })
+      const game = await response.json()
+      navigate(`/game/${game.id}`)
+    } catch (error) {
+      console.error('Error creating game:', error)
+    }
   }
 
   return (

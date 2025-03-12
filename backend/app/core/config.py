@@ -1,23 +1,22 @@
 from pydantic_settings import BaseSettings
-from typing import Optional
+from typing import List
+import os
 
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Backgammon Game API"
     VERSION: str = "1.0.0"
-    API_V1_STR: str = "/api/v1"
+    API_V1_STR: str = "/api"
     
-    # Security
-    SECRET_KEY: str = "development_secret_key"
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    # CORS Configuration
+    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:5173"]
     
     # Database
-    DATABASE_URL: Optional[str] = None
+    DATABASE_URL: str = "sqlite:///backgammon.db"
     
     class Config:
-        env_file = ".env"
         case_sensitive = True
+        env_file = ".env"
 
 
 settings = Settings() 

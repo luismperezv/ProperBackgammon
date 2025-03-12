@@ -15,7 +15,8 @@ export const Board = () => {
   const gameState = useGameStore(state => state.gameState)
   const selectedPoint = useGameStore(state => state.selectedPoint)
   const selectPoint = useGameStore(state => state.selectPoint)
-  const updatePoint = useGameStore(state => state.updatePoint)
+  const updateGameState = useGameStore(state => state.updateGameState)
+  const currentGameId = useGameStore(state => state.currentGameId)
 
   const updateDimensions = () => {
     if (!containerRef.current) return
@@ -51,142 +52,51 @@ export const Board = () => {
     return () => resizeObserver.disconnect()
   }, [])
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>, toPoint: number) => {
+  useEffect(() => {
+    // Start a new game when component mounts if there isn't one
+    const initGame = async () => {
+      if (!currentGameId) {
+        await useGameStore.getState().startNewGame();
+      }
+    };
+    initGame();
+  }, [currentGameId]);
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>, toPoint: number) => {
     e.preventDefault()
     const data = JSON.parse(e.dataTransfer.getData('text/plain'))
     const { color, fromPoint } = data as { color: 'white' | 'black', fromPoint: number }
 
-    // Prevent dropping to the same point it came from
-    if (fromPoint === toPoint) return
-
-    // Handle dragging from regular points
-    if (fromPoint >= 0 && fromPoint <= 24) {
-      // Get the source and target point states
-      const sourcePoint = gameState.points[fromPoint]
-
-      // Don't allow dropping if source point doesn't exist or has no pieces
-      if (!sourcePoint || sourcePoint.count <= 0) return
-
-      // If dropping to bar
-      if (toPoint === -1) {
-        // Update both source point and bar in a single update
-        const currentBarCount = gameState.bar[color]
-        updatePoint(fromPoint, {
-          color: sourcePoint.color,
-          count: sourcePoint.count - 1
-        })
-        updatePoint(toPoint, {
-          color,
-          count: currentBarCount + 1
-        })
-      } 
-      // If dropping to home
-      else if (toPoint === 25 || toPoint === 26) {
-        // Prevent white pieces from going to black home and vice versa
-        if ((color === 'white' && toPoint === 26) || (color === 'black' && toPoint === 25)) return
-
-        const targetCount = toPoint === 25 ? gameState.home.white : gameState.home.black
-        updatePoint(fromPoint, {
-          color: sourcePoint.color,
-          count: sourcePoint.count - 1
-        })
-        updatePoint(toPoint, {
-          color,
-          count: targetCount + 1
-        })
-      }
-      else {
-        // Dropping to another point
-        const targetPoint = gameState.points[toPoint]
-        // Don't allow dropping if target point has pieces of different color
-        if (targetPoint && targetPoint.count > 0 && targetPoint.color !== color) return
-
-        // Update both points in a single update
-        updatePoint(fromPoint, {
-          color: sourcePoint.color,
-          count: sourcePoint.count - 1
-        })
-        updatePoint(toPoint, {
-          color,
-          count: (targetPoint?.count || 0) + 1
-        })
-      }
-    } 
-    // Handle dragging from the bar
-    else if (fromPoint === -1) {
-      // Get the bar state for the color
-      const barCount = gameState.bar[color]
-      const targetPoint = gameState.points[toPoint]
-
-      // Don't allow dropping if:
-      // 1. No pieces of this color on the bar
-      // 2. Target point has pieces of different color
-      // 3. White pieces to black home or black pieces to white home
-      if (barCount <= 0) return
-      if (targetPoint && targetPoint.count > 0 && targetPoint.color !== color) return
-      if ((color === 'white' && toPoint === 26) || (color === 'black' && toPoint === 25)) return
-
-      // If dropping to another home
-      if (toPoint === 25 || toPoint === 26) {
-        const targetCount = toPoint === 25 ? gameState.home.white : gameState.home.black
-        updatePoint(-1, {
-          color,
-          count: barCount - 1
-        })
-        updatePoint(toPoint, {
-          color,
-          count: targetCount + 1
-        })
-      } else {
-        // Update both bar and target point in a single update
-        updatePoint(-1, {
-          color,
-          count: barCount - 1
-        })
-        updatePoint(toPoint, {
-          color,
-          count: (targetPoint?.count || 0) + 1
-        })
-      }
+    if (!currentGameId) {
+      console.error('No active game');
+      return;
     }
-    // Handle dragging from home areas
-    else if (fromPoint === 25 || fromPoint === 26) {
-      const isWhiteHome = fromPoint === 25
-      const homeCount = isWhiteHome ? gameState.home.white : gameState.home.black
 
-      // Don't allow dropping if no pieces in home
-      if (homeCount <= 0) return
+    try {
+      // Call backend to validate and execute move
+      const response = await fetch(`/api/game/${currentGameId}/move`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from_point: fromPoint,
+          to_point: toPoint,
+          color: color,
+        }),
+      })
 
-      // Don't allow dropping to the other home
-      if ((isWhiteHome && toPoint === 26) || (!isWhiteHome && toPoint === 25)) return
-
-      // If dropping to a point
-      if (toPoint >= 0 && toPoint <= 24) {
-        const targetPoint = gameState.points[toPoint]
-        // Don't allow dropping if target point has pieces of different color
-        if (targetPoint && targetPoint.count > 0 && targetPoint.color !== color) return
-
-        updatePoint(fromPoint, {
-          color,
-          count: homeCount - 1
-        })
-        updatePoint(toPoint, {
-          color,
-          count: (targetPoint?.count || 0) + 1
-        })
+      if (!response.ok) {
+        // Handle invalid move
+        console.error('Invalid move:', await response.text())
+        return
       }
-      // If dropping to bar
-      else if (toPoint === -1) {
-        const currentBarCount = gameState.bar[color]
-        updatePoint(fromPoint, {
-          color,
-          count: homeCount - 1
-        })
-        updatePoint(toPoint, {
-          color,
-          count: currentBarCount + 1
-        })
-      }
+
+      // Update game state with the new state from backend
+      const newGameState = await response.json()
+      updateGameState(newGameState.state)
+    } catch (error) {
+      console.error('Error making move:', error)
     }
   }
 
@@ -272,6 +182,17 @@ export const Board = () => {
         alignItems: 'center',
       }}
     >
+      {/* Border element */}
+      <Box
+        sx={{
+          position: 'absolute',
+          width: `${dimensions.width * 1.06}px`, // Add 6% (3% on each side)
+          height: `${dimensions.height + (dimensions.width * 0.06)}px`, // Add 3% of width to top and bottom
+          backgroundColor: '#8B4513', // Darker wood color for border
+          borderRadius: 2,
+          boxShadow: '0 8px 16px rgba(0,0,0,0.3)',
+        }}
+      />
       <Box
         sx={{
           width: `${dimensions.width}px`,
@@ -282,7 +203,8 @@ export const Board = () => {
           position: 'relative',
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'visible', // Ensure no clipping
+          overflow: 'hidden', // Clip the board corners
+          zIndex: 1,
         }}
       >
         {/* Top row (13-24) */}
@@ -291,7 +213,8 @@ export const Board = () => {
           sx={{
             flex: 1,
             display: 'flex',
-            overflow: 'visible', // Ensure no clipping
+            position: 'relative',
+            zIndex: 0,
           }}
         >
           <Box
@@ -300,15 +223,20 @@ export const Board = () => {
               width: '42%',
               height: '100%',
               display: 'flex',
-              overflow: 'visible', // Ensure no clipping
+              position: 'relative',
+              zIndex: 0,
             }}
           >
             {createPointColumns(13, 6, false, true)}
           </Box>
           <Box
             id="white-bar"
-            sx={barAndHomeStyle}
-            onDrop={(e) => handleDrop(e, -1)} // -1 represents the bar
+            sx={{
+              ...barAndHomeStyle,
+              position: 'relative',
+              zIndex: 0,
+            }}
+            onDrop={(e) => handleDrop(e, -1)}
             onDragOver={handleDragOver}
           >
             {/* Render white pieces on the bar */}
@@ -328,15 +256,20 @@ export const Board = () => {
               width: '42%',
               height: '100%',
               display: 'flex',
-              overflow: 'visible', // Ensure no clipping
+              position: 'relative',
+              zIndex: 0,
             }}
           >
             {createPointColumns(19, 6, false, true)}
           </Box>
           <Box
             id="black-home"
-            sx={barAndHomeStyle}
-            onDrop={(e) => handleDrop(e, 26)} // 26 represents black home
+            sx={{
+              ...barAndHomeStyle,
+              position: 'relative',
+              zIndex: 0,
+            }}
+            onDrop={(e) => handleDrop(e, 26)}
             onDragOver={handleDragOver}
           >
             {/* Render black pieces in home */}
@@ -354,17 +287,17 @@ export const Board = () => {
 
         {/* Action Bar */}
         <Box
+          id="action-bar"
           sx={{
             position: 'absolute',
             top: '50%',
             left: '0',
             right: '0',
             transform: 'translateY(-50%)',
-            zIndex: 1,
-            px: 1,
+            zIndex: 1
           }}
         >
-          <ActionBar />
+          <ActionBar boardWidth={dimensions.width} />
         </Box>
 
         {/* Bottom row (01-12) */}
@@ -373,6 +306,8 @@ export const Board = () => {
           sx={{
             flex: 1,
             display: 'flex',
+            position: 'relative',
+            zIndex: 0,
           }}
         >
           <Box
@@ -381,14 +316,20 @@ export const Board = () => {
               width: '42%',
               height: '100%',
               display: 'flex',
+              position: 'relative',
+              zIndex: 0,
             }}
           >
             {createPointColumns(7, 6, true, false)}
           </Box>
           <Box
             id="black-bar"
-            sx={barAndHomeStyle}
-            onDrop={(e) => handleDrop(e, -1)} // -1 represents the bar
+            sx={{
+              ...barAndHomeStyle,
+              position: 'relative',
+              zIndex: 0,
+            }}
+            onDrop={(e) => handleDrop(e, -1)}
             onDragOver={handleDragOver}
           >
             {/* Render black pieces on the bar */}
@@ -408,14 +349,20 @@ export const Board = () => {
               width: '42%',
               height: '100%',
               display: 'flex',
+              position: 'relative',
+              zIndex: 0,
             }}
           >
             {createPointColumns(1, 6, true, false)}
           </Box>
           <Box
             id="white-home"
-            sx={barAndHomeStyle}
-            onDrop={(e) => handleDrop(e, 25)} // 25 represents white home
+            sx={{
+              ...barAndHomeStyle,
+              position: 'relative',
+              zIndex: 0,
+            }}
+            onDrop={(e) => handleDrop(e, 25)}
             onDragOver={handleDragOver}
           >
             {/* Render white pieces in home */}
@@ -429,6 +376,23 @@ export const Board = () => {
               />
             )}
           </Box>
+        </Box>
+
+        {/* Overlay for pieces that need to overflow */}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            pointerEvents: 'none',
+            '& > *': {
+              pointerEvents: 'auto'
+            }
+          }}
+        >
+          {/* Re-render stacks that need to overflow here */}
         </Box>
       </Box>
     </Box>

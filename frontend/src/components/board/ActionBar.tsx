@@ -5,7 +5,11 @@ import { useGameStore } from '../../store/gameStore'
 import { rollDice, DEBUG_GAME_ID } from '../../services/diceService'
 import { DiceDisplay } from './DiceDisplay'
 
-export const ActionBar = () => {
+interface ActionBarProps {
+  boardWidth: number
+}
+
+export const ActionBar = ({ boardWidth }: ActionBarProps) => {
   const { rollDice: storeRollDice, canRoll, dice } = useGameStore()
 
   const handleRollDice = async () => {
@@ -67,7 +71,7 @@ export const ActionBar = () => {
         }}
       >
         {dice && dice.length > 0 ? (
-          <DiceDisplay />
+          <DiceDisplay boardWidth={boardWidth} />
         ) : (
           <Button
             id="dice-roll"
@@ -104,11 +108,7 @@ export const ActionBar = () => {
           alignItems: 'center',
           justifyContent: 'center',
         }}
-      >
-        <IconButton size="small">
-          <RadioButtonUncheckedIcon />
-        </IconButton>
-      </Box>
+      />
     </Box>
   )
 }

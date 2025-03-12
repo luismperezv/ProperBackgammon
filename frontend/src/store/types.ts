@@ -35,10 +35,10 @@ export interface Move {
 }
 
 export interface GameRules {
-  isCrawfordRule: boolean;  // Whether Crawford rule is in effect
-  isJacobyRule: boolean;    // Whether Jacoby rule is in effect
-  automaticDoubles: boolean; // Whether initial double 1s, 2s, etc. are automatic
-  maximumCube: number;      // Maximum value of doubling cube (typically 64)
+  allowDoubling: boolean;
+  crawford: boolean;
+  jacoby: boolean;
+  automaticDoubles: boolean;
 }
 
 export type ResignationType = 'single' | 'gammon' | 'backgammon';
