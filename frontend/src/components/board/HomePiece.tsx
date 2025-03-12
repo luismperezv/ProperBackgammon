@@ -1,39 +1,40 @@
 import { Box } from '@mui/material'
-import { ReactNode } from 'react'
 
-export interface PieceProps {
+export interface HomePieceProps {
   color: 'white' | 'black'
-  pointNumber: number
   boardWidth: number
+  pointNumber: number
   onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void
   onDragEnd?: () => void
   isTopPiece?: boolean
-  isTopRow?: boolean
   sx?: any // Allow additional styles to be passed in
-  children?: ReactNode
 }
 
-export const Piece = ({ color, pointNumber, boardWidth, onDragStart, onDragEnd, isTopPiece = false, isTopRow = false, sx, children }: PieceProps) => {
+export const HomePiece = ({ color, boardWidth, pointNumber, onDragStart, onDragEnd, isTopPiece = false, sx }: HomePieceProps) => {
+  // Calculate piece width to match regular pieces (6% of board width)
+  const pieceWidth = `${boardWidth * 0.06}px`
+  // Make the piece height thicker (12px instead of 8px)
+  const pieceHeight = `${boardWidth * 0.01}px`
+
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
     // Create a div element for the drag image
     const dragImage = document.createElement('div')
-    const pieceSize = `${boardWidth * 0.06}px`
     
     // Apply styles directly to ensure no clipping contexts
     Object.assign(dragImage.style, {
-      width: pieceSize,
-      height: pieceSize,
-      borderRadius: '50%',
+      width: pieceWidth,
+      height: pieceHeight,
       backgroundColor: color === 'white' ? '#F5F5F5' : '#1A1A1A',
-      backgroundImage: `radial-gradient(circle at 30% 30%, ${color === 'white' ? '#FFFFFF' : '#333333'}, ${color === 'white' ? '#F5F5F5' : '#1A1A1A'})`,
-      boxShadow: `0 4px 8px ${color === 'white' ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.5)'}`,
+      backgroundImage: `linear-gradient(to bottom, ${color === 'white' ? '#FFFFFF' : '#333333'}, ${color === 'white' ? '#F5F5F5' : '#1A1A1A'})`,
+      boxShadow: `0 2px 4px ${color === 'white' ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.5)'}`,
       position: 'fixed',
       left: '-1000px', // Position off-screen
       top: '-1000px',
       zIndex: '-1',
       opacity: '0.6',
       pointerEvents: 'none',
-      transform: 'none'
+      transform: 'none',
+      borderRadius: '4px'
     })
     
     document.body.appendChild(dragImage)
@@ -62,45 +63,35 @@ export const Piece = ({ color, pointNumber, boardWidth, onDragStart, onDragEnd, 
     if (onDragEnd) onDragEnd()
   }
 
-  // Calculate piece size as 6% of board width
-  const pieceSize = `${boardWidth * 0.06}px`
-
   return (
     <Box
       draggable
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       sx={{
-        width: pieceSize,
-        height: pieceSize,
-        borderRadius: '50%',
+        width: pieceWidth,
+        height: pieceHeight,
         backgroundColor: color === 'white' ? '#F5F5F5' : '#1A1A1A',
-        backgroundImage: `radial-gradient(circle at 30% 30%, ${color === 'white' ? '#FFFFFF' : '#333333'}, ${color === 'white' ? '#F5F5F5' : '#1A1A1A'})`,
-        boxShadow: `0 4px 8px ${color === 'white' ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.5)'}`,
+        backgroundImage: `linear-gradient(to bottom, ${color === 'white' ? '#FFFFFF' : '#333333'}, ${color === 'white' ? '#F5F5F5' : '#1A1A1A'})`,
+        boxShadow: `0 2px 4px ${color === 'white' ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.5)'}`,
         position: 'absolute',
         left: '50%',
         transform: 'translateX(-50%)',
-        zIndex: 1,
+        borderRadius: '4px',
         cursor: 'grab',
         transition: 'all 0.2s ease-in-out',
         '&:active': {
           cursor: 'grabbing',
         },
         ...(isTopPiece && {
-          '[data-point]:hover &': {
-            transform: `translateX(-50%) translateY(${isTopRow ? '8px' : '-8px'})`,
-            boxShadow: `0 ${isTopRow ? '-8px' : '8px'} 16px ${color === 'white' ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.6)'}`,
+          '&:hover': {
+            boxShadow: `0 4px 8px ${color === 'white' ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.6)'}`,
           }
         }),
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
         ...sx // Merge in any additional styles
       }}
-    >
-      {children}
-    </Box>
+    />
   )
 }
 
-export default Piece 
+export default HomePiece 

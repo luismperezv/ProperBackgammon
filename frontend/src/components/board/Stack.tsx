@@ -1,5 +1,7 @@
 import { Box, Typography } from '@mui/material'
 import Piece from './Piece'
+import HomePiece from './HomePiece'
+import { useState, useEffect } from 'react'
 
 export interface StackProps {
   count: number
@@ -11,76 +13,158 @@ export interface StackProps {
 }
 
 export const Stack = ({ count, color, isTopRow = false, pointNumber, boardWidth, onDragStart }: StackProps) => {
+  const [isDragging, setIsDragging] = useState(false)
+  const [tempCount, setTempCount] = useState(count)
+  
   // Each piece will overlap the previous one by 30%
   const pieceHeight = 20 // Base height percentage
   const overlap = 0.3 // 30% overlap
   const effectiveHeight = pieceHeight * (1 - overlap) // Height after overlap
-  const visibleCount = Math.min(count, 6)
+  const isBar = pointNumber === -1
+  const isHome = pointNumber === 25 || pointNumber === 26
+  const visibleCount = isBar 
+    ? Math.min(2, count) // Show max 2 pieces for bar
+    : isHome
+      ? count // Show all pieces in home
+      : Math.min(6, count) // Show max 6 pieces for regular points
   
-  // Add offset to prevent clipping at board edges
-  const topEdgeOffset = 2 // percentage from edge for top row
-  const bottomEdgeOffset = 3 // percentage from edge for bottom row
+  // For home pieces, use a smaller effective height since they're thinner
+  const homeEffectiveHeight = 4 // Smaller height for home pieces to create tighter stacking
+
+  // Reset dragging state and tempCount when count changes
+  useEffect(() => {
+    setIsDragging(false)
+    setTempCount(count)
+  }, [count])
+
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+    setIsDragging(true)
+    setTempCount(count - 1)
+    if (onDragStart) onDragStart(e)
+  }
+
+  const handleDragEnd = () => {
+    setIsDragging(false)
+    setTempCount(count)
+  }
 
   return (
     <Box
       sx={{
-        position: 'absolute',
+        position: 'relative',
         width: '100%',
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
         ...(isTopRow ? { alignItems: 'flex-start' } : { alignItems: 'flex-end' }),
+        overflow: 'visible', // Ensure no clipping
       }}
     >
-      {Array.from({ length: visibleCount }, (_, index) => (
-        <Box
-          key={index}
-          sx={{
-            position: 'absolute',
-            width: '100%',
-            height: `${pieceHeight}%`,
-            ...(isTopRow
-              ? { top: `${index * effectiveHeight + topEdgeOffset}%` }
-              : { bottom: `${index * effectiveHeight + bottomEdgeOffset}%` }),
-          }}
-        >
+      {Array.from({ length: visibleCount }, (_, index) => {
+        const isTopPiece = index === visibleCount - 1
+        const shouldHide = isDragging && isTopPiece && !isHome && (!isBar && count <= 6)
+
+        // Position pieces starting from the edge (0%) and stack inward
+        const position = isBar
+          ? {
+              top: '50%',
+              transform: 'translateY(-50%)'
+            }
+          : isHome
+            ? (pointNumber === 25)  // White home
+              ? { bottom: `${3 + index * homeEffectiveHeight}%` }  // Stack from bottom up with offset
+              : { top: `${3 + index * homeEffectiveHeight}%` }     // Stack from top for black home with offset
+            : isTopRow
+            ? { top: `${3 + index * effectiveHeight}%` }
+            : { bottom: `${3 + index * effectiveHeight}%` }
+
+        return isHome ? (
+          <HomePiece 
+            key={index}
+            color={color}
+            boardWidth={boardWidth}
+            pointNumber={pointNumber}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            isTopPiece={isTopPiece}
+            sx={{
+              position: 'absolute',
+              ...position,
+              visibility: shouldHide ? 'hidden' : 'visible',
+            }}
+          />
+        ) : (
           <Piece 
+            key={index}
             color={color} 
             pointNumber={pointNumber}
             boardWidth={boardWidth}
-            onDragStart={onDragStart}
-          />
-          {/* Show count on the last visible piece if there are more pieces */}
-          {index === visibleCount - 1 && count > 6 && (
-            <>
-              {/* Dark outline for visibility */}
-              {[-1, 0, 1].map((offsetX) => (
-                [-1, 0, 1].map((offsetY) => (
-                  <Typography
-                    key={`${offsetX}-${offsetY}`}
-                    sx={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`,
-                      color: color === 'white' ? '#1A1A1A' : '#F5F5F5',
-                      fontWeight: 'bold',
-                      fontSize: '0.9rem',
-                      userSelect: 'none',
-                      textShadow: color === 'white'
-                        ? '1px 1px 0 #F5F5F5, -1px 1px 0 #F5F5F5, 1px -1px 0 #F5F5F5, -1px -1px 0 #F5F5F5'
-                        : '1px 1px 0 #1A1A1A, -1px 1px 0 #1A1A1A, 1px -1px 0 #1A1A1A, -1px -1px 0 #1A1A1A',
-                      zIndex: offsetX === 0 && offsetY === 0 ? 2 : 1,
-                    }}
-                  >
-                    {count}
-                  </Typography>
-                ))
-              ))}
-            </>
-          )}
-        </Box>
-      ))}
+            onDragStart={isBar && index === 0 ? undefined : handleDragStart}
+            onDragEnd={handleDragEnd}
+            isTopPiece={isTopPiece}
+            isTopRow={isTopRow}
+            sx={{
+              position: 'absolute',
+              ...position,
+              visibility: shouldHide ? 'hidden' : 'visible',
+              ...(isBar && {
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                cursor: index === 0 ? 'default' : 'grab'
+              })
+            }}
+          >
+            {!isHome && (
+              (!isBar && isTopPiece && tempCount > 6) || 
+              (isBar && isTopPiece && (isDragging ? tempCount >= 2 : count >= 2))
+            ) && (
+              <Typography
+                sx={{
+                  color: color === 'white' ? '#1A1A1A' : '#F5F5F5',
+                  fontWeight: 'bold',
+                  fontSize: '1.4rem',
+                  userSelect: 'none',
+                  pointerEvents: 'none',
+                  textAlign: 'center',
+                }}
+              >
+                {tempCount}
+              </Typography>
+            )}
+          </Piece>
+        )
+      })}
+      {/* Add total counter for home stacks */}
+      {isHome && count > 0 && (
+        <Typography
+          sx={{
+            position: 'absolute',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            ...(pointNumber === 26
+              ? { bottom: 0 }
+              : { top: 0 }),
+            color: color === 'white' ? '#1A1A1A' : '#F5F5F5',
+            backgroundColor: color === 'white' ? '#F5F5F5' : '#1A1A1A',
+            fontWeight: 'bold',
+            fontSize: '1.8rem',
+            userSelect: 'none',
+            pointerEvents: 'none',
+            width: `${boardWidth * 0.06}px`,
+            height: '48px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: pointNumber === 26 
+              ? '8px 8px 0 0'
+              : '0 0 8px 8px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+            zIndex: 3,
+          }}
+        >
+          {count}
+        </Typography>
+      )}
     </Box>
   )
 }

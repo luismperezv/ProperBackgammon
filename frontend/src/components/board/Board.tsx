@@ -55,28 +55,61 @@ export const Board = () => {
     const data = JSON.parse(e.dataTransfer.getData('text/plain'))
     const { color, fromPoint } = data as { color: 'white' | 'black', fromPoint: number }
 
+    // Prevent dropping to the same point it came from
+    if (fromPoint === toPoint) return
+
     // Handle dragging from regular points
-    if (fromPoint >= 0) {
+    if (fromPoint >= 0 && fromPoint <= 24) {
       // Get the source and target point states
       const sourcePoint = gameState.points[fromPoint]
-      const targetPoint = gameState.points[toPoint]
 
-      // Don't allow dropping if:
-      // 1. Target point has pieces of different color
-      // 2. Source point doesn't exist or has no pieces
+      // Don't allow dropping if source point doesn't exist or has no pieces
       if (!sourcePoint || sourcePoint.count <= 0) return
-      if (targetPoint && targetPoint.color !== color) return
 
-      // Update the points
-      updatePoint(fromPoint, {
-        color: sourcePoint.color,
-        count: sourcePoint.count - 1
-      })
+      // If dropping to bar
+      if (toPoint === -1) {
+        // Update both source point and bar in a single update
+        const currentBarCount = gameState.bar[color]
+        updatePoint(fromPoint, {
+          color: sourcePoint.color,
+          count: sourcePoint.count - 1
+        })
+        updatePoint(toPoint, {
+          color,
+          count: currentBarCount + 1
+        })
+      } 
+      // If dropping to home
+      else if (toPoint === 25 || toPoint === 26) {
+        // Prevent white pieces from going to black home and vice versa
+        if ((color === 'white' && toPoint === 26) || (color === 'black' && toPoint === 25)) return
 
-      updatePoint(toPoint, {
-        color,
-        count: (targetPoint?.count || 0) + 1
-      })
+        const targetCount = toPoint === 25 ? gameState.home.white : gameState.home.black
+        updatePoint(fromPoint, {
+          color: sourcePoint.color,
+          count: sourcePoint.count - 1
+        })
+        updatePoint(toPoint, {
+          color,
+          count: targetCount + 1
+        })
+      }
+      else {
+        // Dropping to another point
+        const targetPoint = gameState.points[toPoint]
+        // Don't allow dropping if target point has pieces of different color
+        if (targetPoint && targetPoint.count > 0 && targetPoint.color !== color) return
+
+        // Update both points in a single update
+        updatePoint(fromPoint, {
+          color: sourcePoint.color,
+          count: sourcePoint.count - 1
+        })
+        updatePoint(toPoint, {
+          color,
+          count: (targetPoint?.count || 0) + 1
+        })
+      }
     } 
     // Handle dragging from the bar
     else if (fromPoint === -1) {
@@ -87,19 +120,72 @@ export const Board = () => {
       // Don't allow dropping if:
       // 1. No pieces of this color on the bar
       // 2. Target point has pieces of different color
+      // 3. White pieces to black home or black pieces to white home
       if (barCount <= 0) return
-      if (targetPoint && targetPoint.color !== color) return
+      if (targetPoint && targetPoint.count > 0 && targetPoint.color !== color) return
+      if ((color === 'white' && toPoint === 26) || (color === 'black' && toPoint === 25)) return
 
-      // Update the bar and target point
-      updatePoint(-1, {
-        color,
-        count: barCount - 1
-      })
+      // If dropping to another home
+      if (toPoint === 25 || toPoint === 26) {
+        const targetCount = toPoint === 25 ? gameState.home.white : gameState.home.black
+        updatePoint(-1, {
+          color,
+          count: barCount - 1
+        })
+        updatePoint(toPoint, {
+          color,
+          count: targetCount + 1
+        })
+      } else {
+        // Update both bar and target point in a single update
+        updatePoint(-1, {
+          color,
+          count: barCount - 1
+        })
+        updatePoint(toPoint, {
+          color,
+          count: (targetPoint?.count || 0) + 1
+        })
+      }
+    }
+    // Handle dragging from home areas
+    else if (fromPoint === 25 || fromPoint === 26) {
+      const isWhiteHome = fromPoint === 25
+      const homeCount = isWhiteHome ? gameState.home.white : gameState.home.black
 
-      updatePoint(toPoint, {
-        color,
-        count: (targetPoint?.count || 0) + 1
-      })
+      // Don't allow dropping if no pieces in home
+      if (homeCount <= 0) return
+
+      // Don't allow dropping to the other home
+      if ((isWhiteHome && toPoint === 26) || (!isWhiteHome && toPoint === 25)) return
+
+      // If dropping to a point
+      if (toPoint >= 0 && toPoint <= 24) {
+        const targetPoint = gameState.points[toPoint]
+        // Don't allow dropping if target point has pieces of different color
+        if (targetPoint && targetPoint.count > 0 && targetPoint.color !== color) return
+
+        updatePoint(fromPoint, {
+          color,
+          count: homeCount - 1
+        })
+        updatePoint(toPoint, {
+          color,
+          count: (targetPoint?.count || 0) + 1
+        })
+      }
+      // If dropping to bar
+      else if (toPoint === -1) {
+        const currentBarCount = gameState.bar[color]
+        updatePoint(fromPoint, {
+          color,
+          count: homeCount - 1
+        })
+        updatePoint(toPoint, {
+          color,
+          count: currentBarCount + 1
+        })
+      }
     }
   }
 
@@ -116,7 +202,7 @@ export const Board = () => {
       
       // Alternate colors based on point number
       const isEven = pointNumber % 2 === 0
-      const triangleColor = isEven ? '#E8D0AA' : '#4A2511' // Light wood / Lighter dark wood
+      const triangleColor = isEven ? '#F4E4C1' : '#B98B50' // Lighter wood colors for triangles
       
       // Get point state from game state
       const pointState: PointState | null = gameState.points[pointNumber] || null
@@ -125,6 +211,7 @@ export const Board = () => {
         <Box
           key={pointNumber}
           id={`point-${pointNumber}`}
+          data-point={pointNumber}
           onClick={() => selectPoint(pointNumber)}
           onDrop={(e) => handleDrop(e, pointNumber)}
           onDragOver={handleDragOver}
@@ -138,28 +225,16 @@ export const Board = () => {
             ...(isTopRow ? { justifyContent: 'flex-start' } : { justifyContent: 'flex-end' }),
             '&::before': {
               content: '""',
-              position: 'relative',
+              position: 'absolute',
               width: '100%',
               height: '80%',
+              ...(isTopRow ? { top: 0 } : { bottom: 0 }),
               clipPath: isTopRow
                 ? 'polygon(0% 0%, 50% 100%, 100% 0%)'
                 : 'polygon(0% 100%, 50% 0%, 100% 100%)',
               backgroundColor: triangleColor,
               transition: 'background-color 0.3s ease',
             },
-            // Highlight selected point
-            ...(selectedPoint === pointNumber && {
-              '&::after': {
-                content: '""',
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: 'rgba(255, 255, 0, 0.3)',
-                pointerEvents: 'none',
-              }
-            })
           }}
         >
           {/* Render pieces if there are any on this point */}
@@ -181,7 +256,7 @@ export const Board = () => {
   const barAndHomeStyle = {
     width: '8%',
     height: '100%',
-    bgcolor: '#3A1D0E', // Lighter dark wood color for bar and homes
+    bgcolor: '#D4A76A', // Lighter wood color for bar and homes
     position: 'relative' as const,
   }
 
@@ -200,13 +275,13 @@ export const Board = () => {
         sx={{
           width: `${dimensions.width}px`,
           height: `${dimensions.height}px`,
-          bgcolor: '#8B4513', // Wood brown color
+          bgcolor: '#DEB887', // Lighter burlywood color for the main board
           borderRadius: 1,
           boxShadow: 3,
           position: 'relative',
-          overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
+          overflow: 'visible', // Ensure no clipping
         }}
       >
         {/* Top row (13-24) */}
@@ -214,8 +289,8 @@ export const Board = () => {
           id="13-24"
           sx={{
             flex: 1,
-            borderBottom: '2px solid rgba(255, 255, 255, 0.3)',
             display: 'flex',
+            overflow: 'visible', // Ensure no clipping
           }}
         >
           <Box
@@ -224,21 +299,22 @@ export const Board = () => {
               width: '42%',
               height: '100%',
               display: 'flex',
+              overflow: 'visible', // Ensure no clipping
             }}
           >
             {createPointColumns(13, 6, false, true)}
           </Box>
           <Box
-            id="black-bar"
+            id="white-bar"
             sx={barAndHomeStyle}
             onDrop={(e) => handleDrop(e, -1)} // -1 represents the bar
             onDragOver={handleDragOver}
           >
-            {/* Render black pieces on the bar */}
-            {gameState.bar.black > 0 && (
+            {/* Render white pieces on the bar */}
+            {gameState.bar.white > 0 && (
               <Stack
-                count={gameState.bar.black}
-                color="black"
+                count={gameState.bar.white}
+                color="white"
                 isTopRow={true}
                 pointNumber={-1}
                 boardWidth={dimensions.width}
@@ -251,23 +327,24 @@ export const Board = () => {
               width: '42%',
               height: '100%',
               display: 'flex',
+              overflow: 'visible', // Ensure no clipping
             }}
           >
             {createPointColumns(19, 6, false, true)}
           </Box>
           <Box
-            id="white-home"
+            id="black-home"
             sx={barAndHomeStyle}
-            onDrop={(e) => handleDrop(e, 25)} // 25 represents white home
+            onDrop={(e) => handleDrop(e, 26)} // 26 represents black home
             onDragOver={handleDragOver}
           >
-            {/* Render white pieces in home */}
-            {gameState.home.white > 0 && (
+            {/* Render black pieces in home */}
+            {gameState.home.black > 0 && (
               <Stack
-                count={gameState.home.white}
-                color="white"
+                count={gameState.home.black}
+                color="black"
                 isTopRow={true}
-                pointNumber={25}
+                pointNumber={26}
                 boardWidth={dimensions.width}
               />
             )}
@@ -279,7 +356,6 @@ export const Board = () => {
           id="01-12"
           sx={{
             flex: 1,
-            borderTop: '2px solid rgba(255, 255, 255, 0.3)',
             display: 'flex',
           }}
         >
@@ -294,16 +370,16 @@ export const Board = () => {
             {createPointColumns(7, 6, true, false)}
           </Box>
           <Box
-            id="white-bar"
+            id="black-bar"
             sx={barAndHomeStyle}
             onDrop={(e) => handleDrop(e, -1)} // -1 represents the bar
             onDragOver={handleDragOver}
           >
-            {/* Render white pieces on the bar */}
-            {gameState.bar.white > 0 && (
+            {/* Render black pieces on the bar */}
+            {gameState.bar.black > 0 && (
               <Stack
-                count={gameState.bar.white}
-                color="white"
+                count={gameState.bar.black}
+                color="black"
                 isTopRow={false}
                 pointNumber={-1}
                 boardWidth={dimensions.width}
@@ -321,18 +397,18 @@ export const Board = () => {
             {createPointColumns(1, 6, true, false)}
           </Box>
           <Box
-            id="black-home"
+            id="white-home"
             sx={barAndHomeStyle}
-            onDrop={(e) => handleDrop(e, 26)} // 26 represents black home
+            onDrop={(e) => handleDrop(e, 25)} // 25 represents white home
             onDragOver={handleDragOver}
           >
-            {/* Render black pieces in home */}
-            {gameState.home.black > 0 && (
+            {/* Render white pieces in home */}
+            {gameState.home.white > 0 && (
               <Stack
-                count={gameState.home.black}
-                color="black"
+                count={gameState.home.white}
+                color="white"
                 isTopRow={false}
-                pointNumber={26}
+                pointNumber={25}
                 boardWidth={dimensions.width}
               />
             )}
