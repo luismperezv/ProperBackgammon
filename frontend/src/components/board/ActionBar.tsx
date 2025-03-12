@@ -6,7 +6,7 @@ import { rollDice, DEBUG_GAME_ID } from '../../services/diceService'
 import { DiceDisplay } from './DiceDisplay'
 
 export const ActionBar = () => {
-  const { rollDice: storeRollDice, canRoll } = useGameStore()
+  const { rollDice: storeRollDice, canRoll, dice } = useGameStore()
 
   const handleRollDice = async () => {
     try {
@@ -66,30 +66,33 @@ export const ActionBar = () => {
           gap: 2,
         }}
       >
-        <DiceDisplay />
-        <Button
-          id="dice-roll"
-          variant="contained"
-          color="primary"
-          startIcon={<CasinoIcon sx={{ fontSize: 28 }} />}
-          size="large"
-          disabled={!canRoll}
-          onClick={handleRollDice}
-          sx={{
-            padding: '12px 24px',
-            borderRadius: '12px',
-            fontSize: '1.1rem',
-            fontWeight: 'bold',
-            textTransform: 'none',
-            '&:hover': {
-              transform: 'scale(1.05)',
-              transition: 'all 0.2s ease-in-out',
-            },
-            boxShadow: (theme) => `0 4px 8px ${theme.palette.primary.main}40`,
-          }}
-        >
-          Roll Dice
-        </Button>
+        {dice && dice.length > 0 ? (
+          <DiceDisplay />
+        ) : (
+          <Button
+            id="dice-roll"
+            variant="contained"
+            color="primary"
+            startIcon={<CasinoIcon sx={{ fontSize: 28 }} />}
+            size="large"
+            disabled={!canRoll}
+            onClick={handleRollDice}
+            sx={{
+              padding: '12px 24px',
+              borderRadius: '12px',
+              fontSize: '1.1rem',
+              fontWeight: 'bold',
+              textTransform: 'none',
+              '&:hover': {
+                transform: 'scale(1.05)',
+                transition: 'all 0.2s ease-in-out',
+              },
+              boxShadow: (theme) => `0 4px 8px ${theme.palette.primary.main}40`,
+            }}
+          >
+            Roll Dice
+          </Button>
+        )}
       </Box>
 
       {/* Home bar section - 8% */}
