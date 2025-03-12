@@ -10,14 +10,8 @@ INITIAL_POSITION = {
         "13": {"count": 5, "color": "white"},
         "17": {"count": 3, "color": "black"},
         "19": {"count": 5, "color": "black"},
-        "24": {"count": 2, "color": "white"}
+        "24": {"count": 2, "color": "white"},
     },
-    "bar": {
-        "white": 0,
-        "black": 0
-    },
-    "home": {
-        "white": 0,
-        "black": 0
-    }
-} 
+    "bar": {"white": 0, "black": 0},
+    "home": {"white": 0, "black": 0},
+}

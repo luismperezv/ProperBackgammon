@@ -1,1 +1,1 @@
-"""Constants package.""" 
+"""Constants package."""

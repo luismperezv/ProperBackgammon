@@ -13,7 +13,6 @@ export const Board = () => {
   
   // Get game state from store
   const gameState = useGameStore(state => state.gameState)
-  const selectedPoint = useGameStore(state => state.selectedPoint)
   const selectPoint = useGameStore(state => state.selectPoint)
   const updateGameState = useGameStore(state => state.updateGameState)
   const currentGameId = useGameStore(state => state.currentGameId)

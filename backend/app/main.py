@@ -7,11 +7,9 @@ from app.models import init_db
 from app.core.config import settings
 from app.core.errors import AppError, error_handler
 
+
 def create_app() -> FastAPI:
-    app = FastAPI(
-        title=settings.PROJECT_NAME,
-        version=settings.VERSION
-    )
+    app = FastAPI(title=settings.PROJECT_NAME, version=settings.VERSION)
 
     # Initialize database
     init_db()
@@ -33,25 +31,26 @@ def create_app() -> FastAPI:
 
     return app
 
+
 app = create_app()
+
 
 @app.get("/")
 async def root():
     return {
         "message": f"Welcome to {settings.PROJECT_NAME}",
-        "version": settings.VERSION
+        "version": settings.VERSION,
     }
+
 
 @app.get("/api")
 async def api_root():
     return {
         "status": "ok",
         "version": settings.VERSION,
-        "endpoints": [
-            "/api/health",
-            "/api/game"
-        ]
+        "endpoints": ["/api/health", "/api/game"],
     }
+
 
 @app.get("/api/health")
 async def health_check():
@@ -60,20 +59,17 @@ async def health_check():
             "status": "healthy",
             "timestamp": datetime.datetime.now().isoformat(),
             "uptime": time.time() - START_TIME,
-            "version": settings.VERSION
+            "version": settings.VERSION,
         }
     except Exception as e:
         raise AppError(
-            status_code=500,
-            message="Health check failed",
-            details={"error": str(e)}
+            status_code=500, message="Health check failed", details={"error": str(e)}
         )
+
 
 START_TIME = time.time()
 
+
 @app.get("/api/game")
 async def list_games():
-    return {
-        "status": "ok",
-        "games": []  # TODO: Implement game listing
-    } 
+    return {"status": "ok", "games": []}  # TODO: Implement game listing
