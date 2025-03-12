@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import Stack from './Stack'
 import { useGameStore } from '../../store/gameStore'
 import { PointState } from '../../store/types'
+import ActionBar from './ActionBar'
 
 const GOLDEN_RATIO = 1.618033988749895
 
@@ -349,6 +350,21 @@ export const Board = () => {
               />
             )}
           </Box>
+        </Box>
+
+        {/* Action Bar */}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '0',
+            right: '0',
+            transform: 'translateY(-50%)',
+            zIndex: 1,
+            px: 1,
+          }}
+        >
+          <ActionBar />
         </Box>
 
         {/* Bottom row (01-12) */}
