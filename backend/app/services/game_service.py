@@ -132,6 +132,7 @@ class GameService:
         from_point = move.from_point
         to_point = move.to_point
         color = move.color
+        opponent_color = "black" if color == "white" else "white"
 
         # Handle moving from points
         if from_point >= 0 and from_point <= 24:
@@ -148,16 +149,34 @@ class GameService:
                 home[home_color] = home.get(home_color, 0) + 1
             else:  # Moving to another point
                 target_point = points.get(str(to_point), {"color": color, "count": 0})
-                points[str(to_point)] = {
-                    "color": color,
-                    "count": target_point["count"] + 1,
-                }
+                
+                # Check if there's a single opponent piece to capture
+                if target_point.get("color") == opponent_color and target_point.get("count") == 1:
+                    # Move opponent piece to the bar
+                    bar[opponent_color] = bar.get(opponent_color, 0) + 1
+                    # Place our piece on the point
+                    points[str(to_point)] = {"color": color, "count": 1}
+                else:
+                    # Normal move - add our piece to existing pieces
+                    points[str(to_point)] = {
+                        "color": color,
+                        "count": target_point["count"] + 1 if target_point["color"] == color else 1,
+                    }
 
         # Handle moving from bar
         elif from_point == -1:
             bar[color] = bar[color] - 1
             target_point = points.get(str(to_point), {"color": color, "count": 0})
-            points[str(to_point)] = {"color": color, "count": target_point["count"] + 1}
+            
+            # Check if there's a single opponent piece to capture
+            if target_point.get("color") == opponent_color and target_point.get("count") == 1:
+                # Move opponent piece to the bar
+                bar[opponent_color] = bar.get(opponent_color, 0) + 1
+                # Place our piece on the point
+                points[str(to_point)] = {"color": color, "count": 1}
+            else:
+                # Normal move - add our piece to existing pieces
+                points[str(to_point)] = {"color": color, "count": target_point["count"] + 1 if target_point["color"] == color else 1}
 
         # Handle moving from home
         elif from_point == 25 or from_point == 26:
@@ -168,10 +187,19 @@ class GameService:
                 bar[color] = bar.get(color, 0) + 1
             else:  # Moving to a point
                 target_point = points.get(str(to_point), {"color": color, "count": 0})
-                points[str(to_point)] = {
-                    "color": color,
-                    "count": target_point["count"] + 1,
-                }
+                
+                # Check if there's a single opponent piece to capture
+                if target_point.get("color") == opponent_color and target_point.get("count") == 1:
+                    # Move opponent piece to the bar
+                    bar[opponent_color] = bar.get(opponent_color, 0) + 1
+                    # Place our piece on the point
+                    points[str(to_point)] = {"color": color, "count": 1}
+                else:
+                    # Normal move - add our piece to existing pieces
+                    points[str(to_point)] = {"color": color, "count": target_point["count"] + 1 if target_point["color"] == color else 1}
+
+        # Clean up points with count 0
+        points = {k: v for k, v in points.items() if v["count"] > 0}
 
         new_state["points"] = points
         new_state["bar"] = bar
