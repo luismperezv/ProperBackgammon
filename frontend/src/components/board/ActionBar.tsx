@@ -1,8 +1,23 @@
 import { Box, IconButton, Button } from '@mui/material'
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked'
 import CasinoIcon from '@mui/icons-material/Casino'
+import { useGameStore } from '../../store/gameStore'
+import { rollDice, DEBUG_GAME_ID } from '../../services/diceService'
+import { DiceDisplay } from './DiceDisplay'
 
 export const ActionBar = () => {
+  const { rollDice: storeRollDice, canRoll } = useGameStore()
+
+  const handleRollDice = async () => {
+    try {
+      const data = await rollDice(DEBUG_GAME_ID)
+      // Update game store with dice roll results
+      storeRollDice([data.die1, data.die2] as [number, number])
+    } catch (error) {
+      console.error('Error rolling dice:', error)
+    }
+  }
+
   return (
     <Box
       sx={{
@@ -48,14 +63,18 @@ export const ActionBar = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          gap: 2,
         }}
       >
+        <DiceDisplay />
         <Button
           id="dice-roll"
           variant="contained"
           color="primary"
           startIcon={<CasinoIcon sx={{ fontSize: 28 }} />}
           size="large"
+          disabled={!canRoll}
+          onClick={handleRollDice}
           sx={{
             padding: '12px 24px',
             borderRadius: '12px',
