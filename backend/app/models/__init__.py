@@ -1,11 +1,8 @@
 from app.core.database import Base, engine
 from app.models.dice import DiceRollHistory
-
-
-# Create all tables
-def init_db():
-    Base.metadata.create_all(bind=engine)
+from app.models.game import Game
+from app.models.user import User, UserStats
 
 
 # Import all models here
-__all__ = ["DiceRollHistory"]
+__all__ = ["DiceRollHistory", "Game", "User", "UserStats"]

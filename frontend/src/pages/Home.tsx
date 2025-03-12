@@ -1,15 +1,13 @@
 import { Box, Typography, Button, Paper } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
+import { api } from '../services/api'
 
 function Home() {
   const navigate = useNavigate()
 
   const handleCreateGame = async () => {
     try {
-      const response = await fetch('/api/game', {
-        method: 'POST',
-      })
-      const game = await response.json()
+      const game = await api.createGame()
       navigate(`/game/${game.id}`)
     } catch (error) {
       console.error('Error creating game:', error)

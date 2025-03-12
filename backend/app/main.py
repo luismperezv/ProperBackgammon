@@ -3,16 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 import datetime
 import time
 from app.api import api_router
-from app.models import init_db
 from app.core.config import settings
 from app.core.errors import AppError, error_handler
 
 
 def create_app() -> FastAPI:
     app = FastAPI(title=settings.PROJECT_NAME, version=settings.VERSION)
-
-    # Initialize database
-    init_db()
 
     # Configure CORS
     app.add_middleware(

@@ -22,10 +22,20 @@ export interface GameListResponse {
 
 export interface Game {
     id: string;
-    status: 'waiting' | 'in_progress' | 'completed';
-    players: string[];
+    state: GameState;
     created_at: string;
-    updated_at: string;
+    updated_at: string | null;
+}
+
+export interface GameState {
+    points: Record<string, Point>;
+    bar: Record<'white' | 'black', number>;
+    home: Record<'white' | 'black', number>;
+}
+
+export interface Point {
+    count: number;
+    color: 'white' | 'black';
 }
 
 // API Error
@@ -80,13 +90,13 @@ class ApiClient {
     }
 
     async createGame(): Promise<Game> {
-        const { data } = await this.client.post<ApiResponse<Game>>('/api/game');
-        return data.data!;
+        const { data } = await this.client.post<Game>('/api/game');
+        return data;
     }
 
     async getGame(id: string): Promise<Game> {
-        const { data } = await this.client.get<ApiResponse<Game>>(`/api/game/${id}`);
-        return data.data!;
+        const { data } = await this.client.get<Game>(`/api/game/${id}`);
+        return data;
     }
 }
 

@@ -10,7 +10,9 @@ class GameService:
 
     def create_game(self, game_data: GameCreate) -> Game:
         """Create a new game with initial state."""
-        game = Game(state=game_data.state)
+        # Convert GameState to dict before saving
+        state_dict = game_data.state.model_dump()
+        game = Game(state=state_dict)
         self.db.add(game)
         self.db.commit()
         self.db.refresh(game)

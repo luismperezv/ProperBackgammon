@@ -3,8 +3,19 @@ from datetime import datetime
 from typing import Dict, Any, Literal
 
 
+class Point(BaseModel):
+    count: int
+    color: Literal["white", "black"]
+
+
+class GameState(BaseModel):
+    points: Dict[int, Point]
+    bar: Dict[Literal["white", "black"], int]
+    home: Dict[Literal["white", "black"], int]
+
+
 class GameCreate(BaseModel):
-    state: Dict[str, Any]
+    state: GameState
 
 
 class MoveRequest(BaseModel):

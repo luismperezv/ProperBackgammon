@@ -4,7 +4,7 @@ from typing import Dict, Any
 
 from app.core.database import get_db
 from app.services.game_service import GameService
-from app.schemas.game import Game, GameCreate, MoveRequest
+from app.schemas.game import Game, GameCreate, GameState, MoveRequest
 from app.constants.game import INITIAL_POSITION
 
 router = APIRouter()
@@ -14,7 +14,9 @@ router = APIRouter()
 async def create_game(db: Session = Depends(get_db)):
     """Create a new game with initial state."""
     game_service = GameService(db)
-    game_data = GameCreate(state=INITIAL_POSITION)
+    # Convert INITIAL_POSITION to GameState
+    initial_state = GameState(**INITIAL_POSITION)
+    game_data = GameCreate(state=initial_state)
     return game_service.create_game(game_data)
 
 
