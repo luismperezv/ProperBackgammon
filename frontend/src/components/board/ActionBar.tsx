@@ -1,5 +1,6 @@
-import { Box, IconButton } from '@mui/material'
+import { Box, IconButton, Button } from '@mui/material'
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked'
+import CasinoIcon from '@mui/icons-material/Casino'
 
 export const ActionBar = () => {
   return (
@@ -49,9 +50,27 @@ export const ActionBar = () => {
           justifyContent: 'center',
         }}
       >
-        <IconButton size="small">
-          <RadioButtonUncheckedIcon />
-        </IconButton>
+        <Button
+          id="dice-roll"
+          variant="contained"
+          color="primary"
+          startIcon={<CasinoIcon sx={{ fontSize: 28 }} />}
+          size="large"
+          sx={{
+            padding: '12px 24px',
+            borderRadius: '12px',
+            fontSize: '1.1rem',
+            fontWeight: 'bold',
+            textTransform: 'none',
+            '&:hover': {
+              transform: 'scale(1.05)',
+              transition: 'all 0.2s ease-in-out',
+            },
+            boxShadow: (theme) => `0 4px 8px ${theme.palette.primary.main}40`,
+          }}
+        >
+          Roll Dice
+        </Button>
       </Box>
 
       {/* Home bar section - 8% */}
