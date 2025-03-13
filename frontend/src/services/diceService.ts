@@ -6,6 +6,10 @@ interface DiceRollResponse {
 }
 
 export const rollDice = async (gameId: string): Promise<DiceRollResponse> => {
+  if (!gameId) {
+    throw new Error('Game ID is required to roll dice')
+  }
+
   const response = await fetch(`/api/dice/roll?game_id=${gameId}`, {
     method: 'POST',
   })

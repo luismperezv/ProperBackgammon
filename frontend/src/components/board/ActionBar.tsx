@@ -2,7 +2,7 @@ import { Box, IconButton, Button } from '@mui/material'
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked'
 import CasinoIcon from '@mui/icons-material/Casino'
 import { useGameStore } from '../../store/gameStore'
-import { rollDice, DEBUG_GAME_ID } from '../../services/diceService'
+import { rollDice } from '../../services/diceService'
 import { DiceDisplay } from './DiceDisplay'
 
 interface ActionBarProps {
@@ -10,11 +10,16 @@ interface ActionBarProps {
 }
 
 export const ActionBar = ({ boardWidth }: ActionBarProps) => {
-  const { rollDice: storeRollDice, canRoll, dice } = useGameStore()
+  const { rollDice: storeRollDice, canRoll, dice, currentGameId } = useGameStore()
 
   const handleRollDice = async () => {
+    if (!currentGameId) {
+      console.error('No active game')
+      return
+    }
+
     try {
-      const data = await rollDice(DEBUG_GAME_ID)
+      const data = await rollDice(currentGameId)
       // Update game store with dice roll results
       storeRollDice([data.die1, data.die2] as [number, number])
     } catch (error) {

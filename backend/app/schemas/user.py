@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field, HttpUrl
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Literal
 
 
 class UserStatsBase(BaseModel):
@@ -25,6 +25,8 @@ class UserBase(BaseModel):
     email: EmailStr
     display_name: Optional[str] = Field(None, min_length=2, max_length=50)
     avatar_url: Optional[HttpUrl] = None
+    current_game_id: Optional[str] = None
+    piece_color: Optional[Literal["white", "black"]] = None
 
 
 class UserCreate(UserBase):
@@ -35,6 +37,8 @@ class UserUpdate(BaseModel):
     display_name: Optional[str] = Field(None, min_length=2, max_length=50)
     avatar_url: Optional[HttpUrl] = None
     email: Optional[EmailStr] = None
+    current_game_id: Optional[str] = None
+    piece_color: Optional[Literal["white", "black"]] = None
 
 
 class UserRead(UserBase):

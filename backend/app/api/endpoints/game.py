@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from app.core.database import get_db
 from app.services.game_service import GameService
@@ -11,13 +11,13 @@ router = APIRouter()
 
 
 @router.post("", response_model=Game)
-async def create_game(db: Session = Depends(get_db)):
+async def create_game(game_id: Optional[str] = None, db: Session = Depends(get_db)):
     """Create a new game with initial state."""
     game_service = GameService(db)
     # Convert INITIAL_POSITION to GameState
     initial_state = GameState(**INITIAL_POSITION)
     game_data = GameCreate(state=initial_state)
-    return game_service.create_game(game_data)
+    return game_service.create_game(game_data, game_id)
 
 
 @router.get("/{game_id}", response_model=Game)

@@ -14,4 +14,9 @@ INITIAL_POSITION = {
     },
     "bar": {"white": 0, "black": 0},
     "home": {"white": 0, "black": 0},
+    "current_turn": "white",  # White traditionally moves first in backgammon
+    "dice_state": {
+        "values": None,  # No dice rolled yet at game start
+        "used_values": []
+    }
 }

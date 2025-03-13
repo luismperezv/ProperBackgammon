@@ -2,17 +2,18 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from app.models.game import Game
 from app.schemas.game import GameCreate, MoveRequest
+from typing import Optional
 
 
 class GameService:
     def __init__(self, db: Session):
         self.db = db
 
-    def create_game(self, game_data: GameCreate) -> Game:
+    def create_game(self, game_data: GameCreate, game_id: Optional[str] = None) -> Game:
         """Create a new game with initial state."""
         # Convert GameState to dict before saving
         state_dict = game_data.state.model_dump()
-        game = Game(state=state_dict)
+        game = Game(id=game_id, state=state_dict) if game_id else Game(state=state_dict)
         self.db.add(game)
         self.db.commit()
         self.db.refresh(game)
@@ -33,25 +34,59 @@ class GameService:
         points = state.get("points", {})
         bar = state.get("bar", {"white": 0, "black": 0})
         home = state.get("home", {"white": 0, "black": 0})
+        
+        # Check if it's the player's turn
+        if move.color != state["current_turn"]:
+            raise HTTPException(status_code=400, detail="Not your turn")
+            
+        # Check if dice have been rolled
+        if not state["dice_state"]["values"]:
+            raise HTTPException(status_code=400, detail="Must roll dice before moving")
 
         # Validate move based on game rules
-        if not self._is_valid_move(move, points, bar, home):
+        if not self._is_valid_move(move, state):
             raise HTTPException(status_code=400, detail="Invalid move")
 
         # Execute the move
         new_state = self._execute_move(state, move)
+        
+        # Update used dice values
+        dice_values = state["dice_state"]["values"]
+        move_distance = abs(move.to_point - move.from_point)
+        if move_distance in dice_values and move_distance not in state["dice_state"]["used_values"]:
+            state["dice_state"]["used_values"].append(move_distance)
+        
+        # Check if turn is complete
+        if len(state["dice_state"]["used_values"]) == len(dice_values):
+            # Reset dice state and switch turns
+            new_state["dice_state"]["values"] = None
+            new_state["dice_state"]["used_values"] = []
+            new_state["current_turn"] = "black" if state["current_turn"] == "white" else "white"
+        
         game.state = new_state
         self.db.commit()
         self.db.refresh(game)
         return game
 
     def _is_valid_move(
-        self, move: MoveRequest, points: dict, bar: dict, home: dict
+        self, move: MoveRequest, state: dict
     ) -> bool:
         """Validate if a move is legal according to backgammon rules."""
+        points = state.get("points", {})
+        bar = state.get("bar", {"white": 0, "black": 0})
+        home = state.get("home", {"white": 0, "black": 0})
+        dice_state = state.get("dice_state", {})
+        
         from_point = move.from_point
         to_point = move.to_point
         color = move.color
+        
+        # Validate move distance against dice roll
+        move_distance = abs(to_point - from_point)
+        dice_values = dice_state.get("values", ())
+        used_values = dice_state.get("used_values", [])
+        if move_distance not in dice_values or move_distance in used_values:
+            return False
 
         # Basic validation
         if from_point == to_point:
