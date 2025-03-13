@@ -50,7 +50,7 @@ api.interceptors.response.use(
     // Prevent infinite loops
     if ((originalRequest as any)._retry) {
       tokenService.removeToken(); // Clear invalid tokens
-      window.location.href = '/auth'; // Redirect to login
+      window.location.href = '/'; // Redirect to login
       return Promise.reject(error);
     }
 
@@ -73,7 +73,7 @@ api.interceptors.response.use(
     } catch (refreshError) {
       // If refresh fails, clear tokens and redirect to login
       tokenService.removeToken();
-      window.location.href = '/auth';
+      window.location.href = '/';
       return Promise.reject(refreshError);
     }
   }

@@ -26,7 +26,7 @@ export const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({ childr
 
   const handleLogout = async () => {
     await logout();
-    navigate('/auth');
+    navigate('/');
   };
 
   return (

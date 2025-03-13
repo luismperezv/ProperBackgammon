@@ -4,7 +4,6 @@ import {
   TextField,
   Button,
   Typography,
-  Paper,
 } from '@mui/material';
 import { useAuth } from '../../hooks/useAuth';
 import { LoadingOverlay } from '../common/LoadingOverlay';
@@ -73,7 +72,14 @@ export const RegisterForm: React.FC = () => {
       const { confirmPassword, ...registerData } = formData;
       await register(registerData);
     } catch (err) {
-      setFormError((err as Error).message);
+      const error = err as Error;
+      if ((err as any).code === 'EMAIL_EXISTS') {
+        setFormError('This email address is already registered. Please use a different email or try logging in.');
+      } else if ((err as any).code === 'USERNAME_EXISTS') {
+        setFormError('This username is already taken. Please choose a different username.');
+      } else {
+        setFormError(error.message);
+      }
     }
   };
 
@@ -81,13 +87,8 @@ export const RegisterForm: React.FC = () => {
     <>
       <LoadingOverlay open={isLoading} message="Creating your account..." />
 
-      <Paper 
-        elevation={3} 
+      <Box 
         sx={{ 
-          p: 4, 
-          maxWidth: 400, 
-          mx: 'auto', 
-          mt: 4,
           display: 'flex',
           flexDirection: 'column',
           gap: 2,
@@ -103,7 +104,11 @@ export const RegisterForm: React.FC = () => {
           title="Registration Error"
         />
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <form 
+          onSubmit={handleSubmit} 
+          style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+          noValidate
+        >
           <TextField
             label="Username"
             name="username"
@@ -177,7 +182,7 @@ export const RegisterForm: React.FC = () => {
             Create Account
           </Button>
         </form>
-      </Paper>
+      </Box>
     </>
   );
 }; 

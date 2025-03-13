@@ -4,7 +4,6 @@ import {
   TextField,
   Button,
   Typography,
-  Paper,
 } from '@mui/material';
 import { useAuth } from '../../hooks/useAuth';
 import { LoadingOverlay } from '../common/LoadingOverlay';
@@ -59,13 +58,8 @@ export const LoginForm: React.FC = () => {
     <>
       <LoadingOverlay open={isLoading} message="Logging in..." />
       
-      <Paper 
-        elevation={3} 
+      <Box 
         sx={{ 
-          p: 4, 
-          maxWidth: 400, 
-          mx: 'auto', 
-          mt: 4,
           display: 'flex',
           flexDirection: 'column',
           gap: 2,
@@ -81,7 +75,11 @@ export const LoginForm: React.FC = () => {
           title="Login Error"
         />
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <form 
+          onSubmit={handleSubmit} 
+          style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+          noValidate
+        >
           <TextField
             label="Email"
             type="email"
@@ -120,7 +118,7 @@ export const LoginForm: React.FC = () => {
             Login
           </Button>
         </form>
-      </Paper>
+      </Box>
     </>
   );
 }; 

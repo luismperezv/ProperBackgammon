@@ -40,8 +40,8 @@ export const DashboardPage: React.FC = () => {
           <Typography variant="body1" color="text.secondary" paragraph>
             Please log in again.
           </Typography>
-          <Button variant="contained" color="primary" onClick={() => navigate('/auth')}>
-            Go to Login
+          <Button variant="contained" color="primary" onClick={() => navigate('/')}>
+            Go to Landing Page
           </Button>
         </Paper>
       </Box>

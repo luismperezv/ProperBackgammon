@@ -77,8 +77,12 @@ export const authService = {
         password: credentials.password,
       });
     } catch (error: any) {
-      if (error.response?.status === 409) {
+      if (error.response?.status === 409 || 
+          (error.response?.status === 400 && error.response?.data?.detail === "Email already registered")) {
         throw new AuthError('Email already registered', 'EMAIL_EXISTS');
+      }
+      if (error.response?.status === 400 && error.response?.data?.detail === "Username already taken") {
+        throw new AuthError('Username already taken', 'USERNAME_EXISTS');
       }
       if (error.response?.status === 400) {
         throw new AuthError('Invalid registration data', 'INVALID_DATA');
