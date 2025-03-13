@@ -41,7 +41,7 @@ class UserStats(Base):
     __tablename__ = "user_stats"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+    user_id = Column(String, ForeignKey("users.id"), unique=True, nullable=False)
     games_played = Column(Integer, default=0)
     games_won = Column(Integer, default=0)
     games_lost = Column(Integer, default=0)

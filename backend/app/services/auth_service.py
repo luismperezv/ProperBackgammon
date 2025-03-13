@@ -72,13 +72,16 @@ class AuthService:
         self.db.commit()
         return True
 
-    async def authenticate_user(self, form_data: UserLogin) -> Tuple[User, bool]:
+    async def authenticate_user(self, form_data: UserLogin) -> User:
         """Authenticate user and handle login attempts."""
-        user = self.db.query(User).filter(User.email == form_data.username).first()
+        user = self.db.query(User).filter(
+            (User.email == form_data.username) | (User.username == form_data.username)
+        ).first()
+        
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Incorrect email or password"
+                detail="Incorrect username or password"
             )
 
         # Check if account is locked
@@ -106,7 +109,7 @@ class AuthService:
             self.db.commit()
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Incorrect email or password"
+                detail="Incorrect username or password"
             )
 
         # Reset failed login attempts on successful login

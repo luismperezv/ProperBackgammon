@@ -61,25 +61,27 @@ async def login(
 ):
     """Login to get access token."""
     auth_service = AuthService(db)
-    user = await auth_service.authenticate_user(form_data)
-    
-    if not user:
+    try:
+        user = await auth_service.authenticate_user(form_data)
+        
+        # Update last login timestamp
+        user.last_login = datetime.utcnow()
+        db.commit()
+        
+        # Generate both access and refresh tokens
+        tokens = auth_service.create_user_token(user)
+        refresh_token = create_refresh_token({"sub": str(user.id)})
+        tokens["refresh_token"] = refresh_token
+        
+        return tokens
+    except HTTPException as e:
+        raise e
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
+            detail="Authentication failed",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
-    # Update last login timestamp
-    user.last_login = datetime.utcnow()
-    db.commit()
-    
-    # Generate both access and refresh tokens
-    tokens = auth_service.create_user_token(user)
-    refresh_token = create_refresh_token({"sub": str(user.id)})
-    tokens["refresh_token"] = refresh_token
-    
-    return tokens
 
 @router.post("/refresh", response_model=Token)
 async def refresh_token(
