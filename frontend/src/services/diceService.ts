@@ -1,8 +1,11 @@
+import api from './axiosConfig';
+
 export const DEBUG_GAME_ID = 'debug-game-001'
 
 interface DiceRollResponse {
   die1: number
   die2: number
+  is_doubles: boolean
 }
 
 export const rollDice = async (gameId: string): Promise<DiceRollResponse> => {
@@ -10,13 +13,9 @@ export const rollDice = async (gameId: string): Promise<DiceRollResponse> => {
     throw new Error('Game ID is required to roll dice')
   }
 
-  const response = await fetch(`/api/dice/roll?game_id=${gameId}`, {
-    method: 'POST',
+  const { data } = await api.post<DiceRollResponse>(`/dice/roll`, null, {
+    params: { game_id: gameId },
   })
   
-  if (!response.ok) {
-    throw new Error('Failed to roll dice')
-  }
-  
-  return response.json()
+  return data
 } 

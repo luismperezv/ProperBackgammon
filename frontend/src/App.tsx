@@ -1,22 +1,13 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom'
-import { CustomThemeProvider } from './theme/index.tsx'
-import themeJson from './theme/md3/theme.json'
-import CssBaseline from '@mui/material/CssBaseline'
-import Layout from './components/Layout'
-import ErrorBoundary from './components/ErrorBoundary'
+import { AppRoutes } from './routes';
+import { CustomThemeProvider } from './theme/ThemeProvider';
 
-function App() {
+const App: React.FC = () => {
   return (
-    <ErrorBoundary>
-      <CustomThemeProvider initialTheme={themeJson}>
-        <CssBaseline />
-        <Layout>
-          <Outlet />
-        </Layout>
-      </CustomThemeProvider>
-    </ErrorBoundary>
-  )
-}
+    <CustomThemeProvider>
+      <AppRoutes />
+    </CustomThemeProvider>
+  );
+};
 
-export default App 
+export default App; 

@@ -1,24 +1,20 @@
-import React, { useMemo, useState, createContext, useContext, ReactNode } from 'react';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { convertMD3ToMUI } from './md3/themeAdapter';
-import type { FC } from 'react';
-import themeJson from './md3/theme.json';
+import React, { createContext, useContext, useState, useMemo, type ReactNode } from 'react';
+import { ThemeProvider as MuiThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
+import { convertMD3ToMUI } from './md3/themeAdapter';
+import themeJson from './md3/theme.json';
 
 interface ThemeContextType {
   toggleColorMode: () => void;
   mode: 'light' | 'dark';
 }
 
-const ThemeContext = createContext<ThemeContextType>({
-  toggleColorMode: () => {},
-  mode: 'light',
-});
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-const useCustomTheme = (): ThemeContextType => {
+export const useCustomTheme = (): ThemeContextType => {
   const context = useContext(ThemeContext);
   if (context === undefined) {
-    throw new Error('useCustomTheme must be used within a CustomThemeProvider');
+    throw new Error('useCustomTheme must be used within a ThemeProvider');
   }
   return context;
 };
@@ -27,9 +23,7 @@ interface ThemeProviderProps {
   children: ReactNode;
 }
 
-export const CustomThemeProvider: FC<ThemeProviderProps> = ({ 
-  children 
-}): React.ReactElement => {
+export const CustomThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [mode, setMode] = useState<'light' | 'dark'>('light');
 
   const toggleColorMode = () => {
@@ -51,13 +45,10 @@ export const CustomThemeProvider: FC<ThemeProviderProps> = ({
 
   return (
     <ThemeContext.Provider value={contextValue}>
-      <ThemeProvider theme={theme}>
+      <MuiThemeProvider theme={theme}>
         <CssBaseline />
         {children}
-      </ThemeProvider>
+      </MuiThemeProvider>
     </ThemeContext.Provider>
   );
-};
-
-export { useCustomTheme };
-export type { ThemeProviderProps, ThemeContextType }; 
+}; 
