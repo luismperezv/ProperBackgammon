@@ -10,7 +10,7 @@ import { LoadingOverlay } from '../common/LoadingOverlay';
 import { ErrorAlert } from '../common/ErrorAlert';
 
 export const LoginForm: React.FC = () => {
-  const { login, error: authError, isLoading } = useAuth();
+  const { login, error: authError, isLoading, clearError } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -25,6 +25,12 @@ export const LoginForm: React.FC = () => {
     }));
     // Clear errors when user starts typing
     setFormError(null);
+    clearError();
+  };
+
+  const handleErrorClose = () => {
+    setFormError(null);
+    clearError();
   };
 
   const validateForm = () => {
@@ -49,8 +55,13 @@ export const LoginForm: React.FC = () => {
 
     try {
       await login(formData);
-    } catch (err) {
-      setFormError((err as Error).message);
+    } catch (err: any) {
+      const errorMessage = typeof err.message === 'string' 
+        ? err.message 
+        : 'Failed to login. Please try again.';
+      setFormError(errorMessage);
+      // Prevent the form from being cleared on error
+      return;
     }
   };
 
@@ -69,11 +80,14 @@ export const LoginForm: React.FC = () => {
           Login
         </Typography>
 
-        <ErrorAlert 
-          error={formError || authError}
-          onClose={() => setFormError(null)}
-          title="Login Error"
-        />
+        {(formError || authError) && (
+          <ErrorAlert 
+            error={formError || authError}
+            onClose={handleErrorClose}
+            title="Login Error"
+            severity="error"
+          />
+        )}
 
         <form 
           onSubmit={handleSubmit} 
@@ -92,6 +106,21 @@ export const LoginForm: React.FC = () => {
             error={!!formError && !formData.email}
             helperText={(!formData.email && formError) ? 'Email is required' : ''}
             disabled={isLoading}
+            sx={{
+              '& .MuiInputBase-input:-webkit-autofill': {
+                '-webkit-box-shadow': '0 0 0 100px var(--mui-palette-background-default) inset',
+                '-webkit-text-fill-color': 'var(--mui-palette-text-primary)',
+              },
+              '& .MuiInputBase-input:-webkit-autofill + fieldset': {
+                borderColor: 'var(--mui-palette-primary-main)',
+                borderWidth: '2px',
+              },
+              '& .MuiInputBase-input:-webkit-autofill ~ label': {
+                transform: 'translate(14px, -9px) scale(0.75)',
+                background: 'var(--mui-palette-background-default)',
+                padding: '0 8px',
+              },
+            }}
           />
 
           <TextField
@@ -106,6 +135,21 @@ export const LoginForm: React.FC = () => {
             error={!!formError && !formData.password}
             helperText={(!formData.password && formError) ? 'Password is required' : ''}
             disabled={isLoading}
+            sx={{
+              '& .MuiInputBase-input:-webkit-autofill': {
+                '-webkit-box-shadow': '0 0 0 100px var(--mui-palette-background-default) inset',
+                '-webkit-text-fill-color': 'var(--mui-palette-text-primary)',
+              },
+              '& .MuiInputBase-input:-webkit-autofill + fieldset': {
+                borderColor: 'var(--mui-palette-primary-main)',
+                borderWidth: '2px',
+              },
+              '& .MuiInputBase-input:-webkit-autofill ~ label': {
+                transform: 'translate(14px, -9px) scale(0.75)',
+                background: 'var(--mui-palette-background-default)',
+                padding: '0 8px',
+              },
+            }}
           />
 
           <Button

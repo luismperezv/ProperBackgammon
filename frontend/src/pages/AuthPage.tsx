@@ -9,11 +9,12 @@ type AuthView = 'login' | 'register';
 
 interface LocationState {
   initialView?: AuthView;
+  from?: Location;
 }
 
 export const AuthPage: React.FC = () => {
   const location = useLocation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, error, isLoading } = useAuth();
   const [currentView, setCurrentView] = useState<AuthView>('login');
 
   useEffect(() => {
@@ -23,7 +24,7 @@ export const AuthPage: React.FC = () => {
     }
   }, [location.state]);
 
-  if (isAuthenticated) {
+  if (isAuthenticated && !error && !isLoading) {
     return <Navigate to="/dashboard" replace />;
   }
 

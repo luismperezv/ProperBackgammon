@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LoginCredentials, RegisterCredentials, User } from '../types/auth';
 import authService, { AuthError } from '../services/authService';
@@ -34,9 +34,11 @@ export const useAuth = () => {
   const clearError = () => setError(null);
 
   const login = async (credentials: LoginCredentials) => {
+    console.log('Login attempt started');
     setState(prev => ({ ...prev, isLoading: true, error: null }));
     try {
       const { user } = await authService.login(credentials);
+      console.log('Login successful, user:', user);
       setState({
         user,
         isAuthenticated: true,
@@ -46,7 +48,15 @@ export const useAuth = () => {
       });
       navigate('/dashboard');
     } catch (error) {
-      setError(error as AuthError);
+      console.log('Login failed:', error);
+      setState(prev => ({
+        ...prev,
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+        error: (error as AuthError).message || 'Login failed',
+        errorCode: (error as AuthError).code,
+      }));
       throw error;
     }
   };
@@ -82,6 +92,17 @@ export const useAuth = () => {
   };
 
   const checkAuth = useCallback(async () => {
+    // Skip auth check if we're on the login or auth pages
+    if (window.location.pathname === '/auth' || window.location.pathname === '/') {
+      setState(prev => {
+        if (prev.isLoading) {
+          return { ...prev, isLoading: false };
+        }
+        return prev;
+      });
+      return;
+    }
+
     if (!tokenService.getToken()) {
       setState(prev => ({ ...prev, isLoading: false, isAuthenticated: false }));
       return;
@@ -94,13 +115,21 @@ export const useAuth = () => {
       }
 
       const user = await authService.getCurrentUser();
-      setState({
-        user,
-        isAuthenticated: !!user,
-        isLoading: false,
-        error: null,
-        errorCode: undefined,
-      });
+      if (user) {
+        setState({
+          user,
+          isAuthenticated: true,
+          isLoading: false,
+          error: null,
+          errorCode: undefined,
+        });
+      } else {
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          isAuthenticated: false,
+        }));
+      }
     } catch (error) {
       setState({
         user: null,
@@ -111,10 +140,17 @@ export const useAuth = () => {
       });
       tokenService.removeToken();
     }
-  }, []);
+  }, []); // Remove all dependencies
+
+  // Use a ref to track initial mount
+  const isInitialMount = useRef(true);
 
   useEffect(() => {
-    checkAuth();
+    // Only run checkAuth on initial mount
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      checkAuth();
+    }
   }, [checkAuth]);
 
   return {

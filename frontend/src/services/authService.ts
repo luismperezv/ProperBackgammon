@@ -52,19 +52,15 @@ export const authService = {
         token: data.access_token,
       };
     } catch (error: any) {
-      console.error('Login error:', {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message
-      });
-      
-      if (error.response?.status === 401) {
-        throw new AuthError('Invalid email or password', 'INVALID_CREDENTIALS');
+      console.error('Login error:', error);
+      if (error.response?.data?.detail) {
+        throw new AuthError(
+          typeof error.response.data.detail === 'string' 
+            ? error.response.data.detail 
+            : 'Invalid credentials'
+        );
       }
-      if (error.response?.status === 429) {
-        throw new AuthError('Too many attempts. Please try again later.', 'RATE_LIMIT');
-      }
-      throw this.handleError(error);
+      throw new AuthError(error.message || 'An error occurred during login');
     }
   },
 
@@ -151,7 +147,10 @@ export const authService = {
 
   handleError(error: any): Error {
     if (error.response?.data?.detail) {
-      return new AuthError(error.response.data.detail);
+      const detail = error.response.data.detail;
+      return new AuthError(
+        typeof detail === 'string' ? detail : 'An error occurred'
+      );
     }
     if (error.message) {
       return new AuthError(error.message);

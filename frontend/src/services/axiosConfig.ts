@@ -50,7 +50,6 @@ api.interceptors.response.use(
     // Prevent infinite loops
     if ((originalRequest as any)._retry) {
       tokenService.removeToken(); // Clear invalid tokens
-      window.location.href = '/'; // Redirect to login
       return Promise.reject(error);
     }
 
@@ -71,9 +70,8 @@ api.interceptors.response.use(
       
       return api(originalRequest);
     } catch (refreshError) {
-      // If refresh fails, clear tokens and redirect to login
+      // If refresh fails, clear tokens
       tokenService.removeToken();
-      window.location.href = '/';
       return Promise.reject(refreshError);
     }
   }
