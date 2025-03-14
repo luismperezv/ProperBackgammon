@@ -3,8 +3,6 @@ import { useParams } from 'react-router-dom'
 import { Box, Typography } from '@mui/material'
 import Board from '../components/board/Board'
 
-// TODO: Add game board component and WebSocket connection
-
 function Game() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
