@@ -8,6 +8,7 @@ import {
 import { useAuth } from '../../hooks/useAuth';
 import { LoadingOverlay } from '../common/LoadingOverlay';
 import { ErrorAlert } from '../common/ErrorAlert';
+import { PasswordInput } from './PasswordInput';
 
 interface FormData {
   username: string;
@@ -83,6 +84,20 @@ export const RegisterForm: React.FC = () => {
     }
   };
 
+  const inputSx = {
+    '& .MuiInputBase-input': {
+      '&:-webkit-autofill': {
+        transition: 'background-color 5000s ease-in-out 0s',
+        boxShadow: '0 0 0px 1000px transparent inset',
+        WebkitTextFillColor: 'var(--mui-palette-text-primary)',
+      },
+    },
+    '& .MuiInputLabel-root': {
+      backgroundColor: 'var(--mui-palette-background-paper)',
+      px: 1,
+    },
+  };
+
   return (
     <>
       <LoadingOverlay open={isLoading} message="Creating your account..." />
@@ -120,6 +135,7 @@ export const RegisterForm: React.FC = () => {
             error={!!formError && !formData.username}
             helperText={(!formData.username && formError) ? 'Username is required' : ''}
             disabled={isLoading}
+            sx={inputSx}
           />
 
           <TextField
@@ -134,17 +150,14 @@ export const RegisterForm: React.FC = () => {
             error={!!formError && !formData.email}
             helperText={(!formData.email && formError) ? 'Email is required' : ''}
             disabled={isLoading}
+            sx={inputSx}
           />
 
-          <TextField
+          <PasswordInput
             label="Password"
-            type="password"
             name="password"
             value={formData.password}
             onChange={handleChange}
-            required
-            fullWidth
-            autoComplete="new-password"
             error={!!formError && (!formData.password || formData.password.length < 8)}
             helperText={
               (!formData.password && formError)
@@ -152,17 +165,14 @@ export const RegisterForm: React.FC = () => {
                 : 'Password must be at least 8 characters long'
             }
             disabled={isLoading}
+            autoComplete="new-password"
           />
 
-          <TextField
+          <PasswordInput
             label="Confirm Password"
-            type="password"
             name="confirmPassword"
             value={formData.confirmPassword}
             onChange={handleChange}
-            required
-            fullWidth
-            autoComplete="new-password"
             error={!!formError && formData.password !== formData.confirmPassword}
             helperText={
               (formData.password !== formData.confirmPassword && formError)
@@ -170,6 +180,7 @@ export const RegisterForm: React.FC = () => {
                 : ''
             }
             disabled={isLoading}
+            autoComplete="new-password"
           />
 
           <Button

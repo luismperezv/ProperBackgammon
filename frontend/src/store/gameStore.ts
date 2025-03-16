@@ -12,6 +12,13 @@ import {
   PointState
 } from './types';
 
+interface TurnMove {
+  fromPoint: number
+  toPoint: number
+  previousGameState: GameState
+  usedValues: number[]
+}
+
 interface GameStore {
   // Match state
   matchScore: {
@@ -84,6 +91,8 @@ interface GameStore {
   updateGameState: (newState: GameState) => void;
   updateMatchScore: (white: number, black: number) => void;
   setCurrentGameId: (gameId: string) => void;
+
+  turnMoves: TurnMove[]
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -97,7 +106,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   gameState: {
     points: {},
     bar: { white: 0, black: 0 },
-    home: { white: 0, black: 0 }
+    home: { white: 0, black: 0 },
+    dice_state: {
+      values: null,
+      used_values: []
+    }
   },
   currentGameId: null,
   currentPlayer: 'white',
@@ -253,17 +266,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
   rollDice: (diceValues?: [number, number]) => {
     if (!get().canRoll) return;
     
+    // If no dice values provided, generate random ones
     const dice = diceValues || [
       Math.floor(Math.random() * 6) + 1,
       Math.floor(Math.random() * 6) + 1
     ];
     
-    set({
+    // Reset turn moves when rolling dice
+    set(state => ({
       dice,
       canRoll: false,
-      // TODO: Calculate valid moves based on dice
-      validMoves: []
-    });
+      turnMoves: [],
+      gameState: {
+        ...state.gameState,
+        dice_state: {
+          values: dice,
+          used_values: []
+        }
+      }
+    }));
 
     // Start clock if time control is enabled
     if (get().timeControl) {
@@ -286,7 +307,40 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   undoLastMove: () => {
-    // TODO: Implement undo logic
+    const { turnMoves } = get();
+    if (turnMoves.length === 0) return;
+    
+    const lastMove = turnMoves[turnMoves.length - 1];
+    
+    // Create a new state object with deep copies of all properties
+    const restoredState: GameState = {
+      points: {},
+      bar: { ...lastMove.previousGameState.bar },
+      home: { ...lastMove.previousGameState.home },
+      dice_state: {
+        values: lastMove.previousGameState.dice_state?.values ? 
+          [...lastMove.previousGameState.dice_state.values] : null,
+        used_values: lastMove.previousGameState.dice_state?.used_values ?
+          [...lastMove.previousGameState.dice_state.used_values] : []
+      }
+    };
+
+    // Deep copy of points from the previous state
+    Object.entries(lastMove.previousGameState.points).forEach(([pointKey, pointState]) => {
+      if (pointState) {
+        restoredState.points[Number(pointKey)] = {
+          color: pointState.color,
+          count: pointState.count
+        };
+      }
+    });
+    
+    // Update both the game state and dice state
+    set({
+      gameState: restoredState,
+      dice: restoredState.dice_state.values || [],
+      turnMoves: turnMoves.slice(0, -1)
+    });
   },
 
   // Clock actions
@@ -297,7 +351,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       timeControl: {
         ...get().timeControl!,
         isClockRunning: true,
-        activePlayer: get().currentPlayer
+        activePlayer: get().currentPlayer,
+        remainingTime: get().timeControl!.remainingTime
       }
     });
   },
@@ -321,9 +376,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const newTimeControl: TimeControl = {
       initialTime: tc.initialTime,
       increment: tc.increment,
-      timeLeft: {
-        ...tc.timeLeft,
-        [player]: tc.timeLeft[player] + tc.increment
+      remainingTime: {
+        ...tc.remainingTime,
+        [player]: tc.remainingTime[player] + tc.increment
       },
       isClockRunning: tc.isClockRunning,
       activePlayer: tc.activePlayer
@@ -332,8 +387,68 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   // State sync
-  updateGameState: (newState: GameState) => {
-    set({ gameState: newState });
+  updateGameState: (newGameState: GameState) => {
+    const currentState = get().gameState;
+    
+    // Store the move in turn history if dice were used
+    if (newGameState.dice_state?.used_values?.length > currentState.dice_state?.used_values?.length) {
+      const usedValues = newGameState.dice_state.used_values.slice(currentState.dice_state?.used_values?.length || 0);
+      
+      // Find the points that changed to determine fromPoint and toPoint
+      let fromPoint = -1;
+      let toPoint = -1;
+      
+      // Check points for changes
+      Object.entries(currentState.points || {}).forEach(([point, state]) => {
+        if (!state) return;
+        const newState = newGameState.points[parseInt(point)];
+        if (!newState || newState.count < state.count) {
+          fromPoint = parseInt(point);
+        }
+      });
+      
+      Object.entries(newGameState.points || {}).forEach(([point, state]) => {
+        if (!state) return;
+        const oldState = currentState.points[parseInt(point)];
+        if (!oldState || state.count > oldState.count) {
+          toPoint = parseInt(point);
+        }
+      });
+      
+      // Create a deep copy of the current state before storing it
+      const previousGameState: GameState = {
+        points: {},
+        bar: { ...currentState.bar },
+        home: { ...currentState.home },
+        dice_state: {
+          values: currentState.dice_state?.values ? [...currentState.dice_state.values] : null,
+          used_values: currentState.dice_state?.used_values ? [...currentState.dice_state.used_values] : []
+        }
+      };
+
+      // Deep copy of points
+      Object.entries(currentState.points).forEach(([pointKey, pointState]) => {
+        if (pointState) {
+          previousGameState.points[Number(pointKey)] = {
+            color: pointState.color,
+            count: pointState.count
+          };
+        }
+      });
+      
+      // Store the move with the complete previous state
+      set(state => ({
+        gameState: newGameState,
+        turnMoves: [...(state.turnMoves || []), {
+          fromPoint,
+          toPoint,
+          previousGameState,
+          usedValues
+        }]
+      }));
+    } else {
+      set({ gameState: newGameState });
+    }
   },
 
   updateMatchScore: (white: number, black: number) => {
@@ -348,4 +463,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setCurrentGameId: (gameId: string) => {
     set({ currentGameId: gameId });
   },
+
+  turnMoves: [],
 })); 

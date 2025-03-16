@@ -1,6 +1,7 @@
 import { Box, IconButton, Button } from '@mui/material'
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked'
 import CasinoIcon from '@mui/icons-material/Casino'
+import UndoIcon from '@mui/icons-material/Undo'
 import { useGameStore } from '../../store/gameStore'
 import { rollDice } from '../../services/diceService'
 import { DiceDisplay } from './DiceDisplay'
@@ -10,7 +11,7 @@ interface ActionBarProps {
 }
 
 export const ActionBar = ({ boardWidth }: ActionBarProps) => {
-  const { rollDice: storeRollDice, canRoll, dice, currentGameId } = useGameStore()
+  const { rollDice: storeRollDice, canRoll, dice, currentGameId, turnMoves, undoLastMove } = useGameStore()
 
   const handleRollDice = async () => {
     if (!currentGameId) {
@@ -25,6 +26,10 @@ export const ActionBar = ({ boardWidth }: ActionBarProps) => {
     } catch (error) {
       console.error('Error rolling dice:', error)
     }
+  }
+
+  const handleUndo = () => {
+    undoLastMove()
   }
 
   return (
@@ -44,9 +49,20 @@ export const ActionBar = ({ boardWidth }: ActionBarProps) => {
           justifyContent: 'center',
         }}
       >
-        <IconButton size="small">
-          <RadioButtonUncheckedIcon />
-        </IconButton>
+        {turnMoves && turnMoves.length > 0 && (
+          <Button
+            variant="contained"
+            color="primary"
+            size="large"
+            startIcon={<UndoIcon />}
+            onClick={handleUndo}
+            sx={{
+              boxShadow: (theme) => `0 4px 8px ${theme.palette.primary.main}40`,
+            }}
+          >
+            Undo
+          </Button>
+        )}
       </Box>
 
       {/* Center bar section - 8% */}
@@ -82,20 +98,11 @@ export const ActionBar = ({ boardWidth }: ActionBarProps) => {
             id="dice-roll"
             variant="contained"
             color="primary"
-            startIcon={<CasinoIcon sx={{ fontSize: 28 }} />}
             size="large"
+            startIcon={<CasinoIcon sx={{ fontSize: 28 }} />}
             disabled={!canRoll}
             onClick={handleRollDice}
             sx={{
-              padding: '12px 24px',
-              borderRadius: '12px',
-              fontSize: '1.1rem',
-              fontWeight: 'bold',
-              textTransform: 'none',
-              '&:hover': {
-                transform: 'scale(1.05)',
-                transition: 'all 0.2s ease-in-out',
-              },
               boxShadow: (theme) => `0 4px 8px ${theme.palette.primary.main}40`,
             }}
           >

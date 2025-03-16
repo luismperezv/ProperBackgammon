@@ -38,4 +38,4 @@ env/
 venv/
 .env/
 .venv/
-ENV/ 
+ENV/ backend/backgammon.db

@@ -101,29 +101,18 @@ export const authService = {
 
   async getCurrentUser(): Promise<User | null> {
     try {
-      console.log('Checking current user...');
       // Check if token exists and is not expired
       const token = tokenService.getToken();
       const isExpired = tokenService.isTokenExpired();
-      console.log('Token status:', { hasToken: !!token, isExpired });
       
       if (!token || isExpired) {
-        console.log('No valid token found');
         tokenService.removeToken();
         return null;
       }
 
-      console.log('Fetching user details...');
       const { data } = await api.get<User>('/auth/me');
-      console.log('User details received:', data);
       return data;
     } catch (error: any) {
-      console.error('getCurrentUser error:', {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message
-      });
-      
       if (error.response?.status === 401) {
         tokenService.removeToken();
       }

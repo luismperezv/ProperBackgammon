@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     ACCOUNT_LOCKOUT_MINUTES: int = 15
 
     # Email settings
-    EMAIL_ENABLED: bool = True
+    EMAIL_ENABLED: bool = False
     MAIL_USERNAME: str = ""
     MAIL_PASSWORD: str = ""
     MAIL_FROM: str = "noreply@backgammon.com"

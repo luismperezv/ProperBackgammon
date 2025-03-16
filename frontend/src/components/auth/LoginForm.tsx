@@ -8,6 +8,7 @@ import {
 import { useAuth } from '../../hooks/useAuth';
 import { LoadingOverlay } from '../common/LoadingOverlay';
 import { ErrorAlert } from '../common/ErrorAlert';
+import { PasswordInput } from './PasswordInput';
 
 export const LoginForm: React.FC = () => {
   const { login, error: authError, isLoading, clearError } = useAuth();
@@ -65,6 +66,20 @@ export const LoginForm: React.FC = () => {
     }
   };
 
+  const inputSx = {
+    '& .MuiInputBase-input': {
+      '&:-webkit-autofill': {
+        transition: 'background-color 5000s ease-in-out 0s',
+        boxShadow: '0 0 0px 1000px transparent inset',
+        WebkitTextFillColor: 'var(--mui-palette-text-primary)',
+      },
+    },
+    '& .MuiInputLabel-root': {
+      backgroundColor: 'var(--mui-palette-background-paper)',
+      px: 1,
+    },
+  };
+
   return (
     <>
       <LoadingOverlay open={isLoading} message="Logging in..." />
@@ -106,50 +121,18 @@ export const LoginForm: React.FC = () => {
             error={!!formError && !formData.email}
             helperText={(!formData.email && formError) ? 'Email is required' : ''}
             disabled={isLoading}
-            sx={{
-              '& .MuiInputBase-input:-webkit-autofill': {
-                '-webkit-box-shadow': '0 0 0 100px var(--mui-palette-background-default) inset',
-                '-webkit-text-fill-color': 'var(--mui-palette-text-primary)',
-              },
-              '& .MuiInputBase-input:-webkit-autofill + fieldset': {
-                borderColor: 'var(--mui-palette-primary-main)',
-                borderWidth: '2px',
-              },
-              '& .MuiInputBase-input:-webkit-autofill ~ label': {
-                transform: 'translate(14px, -9px) scale(0.75)',
-                background: 'var(--mui-palette-background-default)',
-                padding: '0 8px',
-              },
-            }}
+            sx={inputSx}
           />
 
-          <TextField
+          <PasswordInput
             label="Password"
-            type="password"
             name="password"
             value={formData.password}
             onChange={handleChange}
-            required
-            fullWidth
-            autoComplete="current-password"
             error={!!formError && !formData.password}
             helperText={(!formData.password && formError) ? 'Password is required' : ''}
             disabled={isLoading}
-            sx={{
-              '& .MuiInputBase-input:-webkit-autofill': {
-                '-webkit-box-shadow': '0 0 0 100px var(--mui-palette-background-default) inset',
-                '-webkit-text-fill-color': 'var(--mui-palette-text-primary)',
-              },
-              '& .MuiInputBase-input:-webkit-autofill + fieldset': {
-                borderColor: 'var(--mui-palette-primary-main)',
-                borderWidth: '2px',
-              },
-              '& .MuiInputBase-input:-webkit-autofill ~ label': {
-                transform: 'translate(14px, -9px) scale(0.75)',
-                background: 'var(--mui-palette-background-default)',
-                padding: '0 8px',
-              },
-            }}
+            autoComplete="current-password"
           />
 
           <Button

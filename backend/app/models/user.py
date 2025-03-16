@@ -23,7 +23,6 @@ class User(Base):
     display_name = Column(String)
     avatar_url = Column(String)
     current_game_id = Column(String, ForeignKey("games.id"), nullable=True)
-    piece_color = Column(Enum(PieceColor), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     last_login = Column(DateTime(timezone=True))
@@ -35,6 +34,9 @@ class User(Base):
     # Relationships
     stats = relationship("UserStats", back_populates="user", uselist=False)
     current_game = relationship("Game", foreign_keys=[current_game_id])
+    created_games = relationship("Game", back_populates="creator", foreign_keys="Game.creator_id")
+    games_as_white = relationship("Game", back_populates="white_player", foreign_keys="Game.white_player_id")
+    games_as_black = relationship("Game", back_populates="black_player", foreign_keys="Game.black_player_id")
 
 
 class UserStats(Base):

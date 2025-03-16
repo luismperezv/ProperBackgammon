@@ -109,9 +109,10 @@ export const useAuth = () => {
     }
 
     try {
-      const isValid = await authService.validateSession();
-      if (!isValid) {
-        throw new AuthError('Session expired', 'SESSION_EXPIRED');
+      const token = tokenService.getToken();
+      if (!token || tokenService.isTokenExpired()) {
+        setState(prev => ({ ...prev, isLoading: false, isAuthenticated: false }));
+        return;
       }
 
       const user = await authService.getCurrentUser();

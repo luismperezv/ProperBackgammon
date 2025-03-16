@@ -24,29 +24,14 @@ class GameService:
         return self.db.query(Game).filter(Game.id == game_id).first()
 
     def make_move(self, game_id: str, move: MoveRequest) -> Game | None:
-        """Validate and execute a move in the game."""
+        """Execute a move in the game."""
         game = self.get_game(game_id)
         if not game:
             return None
 
         # Get current game state
         state = game.state
-        points = state.get("points", {})
-        bar = state.get("bar", {"white": 0, "black": 0})
-        home = state.get("home", {"white": 0, "black": 0})
         
-        # Check if it's the player's turn
-        if move.color != state["current_turn"]:
-            raise HTTPException(status_code=400, detail="Not your turn")
-            
-        # Check if dice have been rolled
-        if not state["dice_state"]["values"]:
-            raise HTTPException(status_code=400, detail="Must roll dice before moving")
-
-        # Validate move based on game rules
-        if not self._is_valid_move(move, state):
-            raise HTTPException(status_code=400, detail="Invalid move")
-
         # Execute the move
         new_state = self._execute_move(state, move)
         

@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: ea83c7875760
+Revision ID: f5fb02c96750
 Revises: 
-Create Date: 2025-03-13 00:52:34.011701
+Create Date: 2025-03-15 00:24:24.578490
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'ea83c7875760'
+revision: str = 'f5fb02c96750'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -36,6 +36,13 @@ def upgrade() -> None:
     sa.Column('state', sa.JSON(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('is_local', sa.Boolean(), nullable=False),
+    sa.Column('creator_id', sa.String(), nullable=True),
+    sa.Column('white_player_id', sa.String(), nullable=True),
+    sa.Column('black_player_id', sa.String(), nullable=True),
+    sa.ForeignKeyConstraint(['black_player_id'], ['users.id'], ),
+    sa.ForeignKeyConstraint(['creator_id'], ['users.id'], ),
+    sa.ForeignKeyConstraint(['white_player_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_games_id'), 'games', ['id'], unique=False)
@@ -59,7 +66,6 @@ def upgrade() -> None:
     sa.Column('display_name', sa.String(), nullable=True),
     sa.Column('avatar_url', sa.String(), nullable=True),
     sa.Column('current_game_id', sa.String(), nullable=True),
-    sa.Column('piece_color', sa.Enum('WHITE', 'BLACK', name='piececolor'), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('last_login', sa.DateTime(timezone=True), nullable=True),
@@ -74,7 +80,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_users_username'), 'users', ['username'], unique=True)
     op.create_table('user_stats',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.String(), nullable=False),
     sa.Column('games_played', sa.Integer(), nullable=True),
     sa.Column('games_won', sa.Integer(), nullable=True),
     sa.Column('games_lost', sa.Integer(), nullable=True),

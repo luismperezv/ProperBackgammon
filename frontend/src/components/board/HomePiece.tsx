@@ -7,10 +7,20 @@ export interface HomePieceProps {
   onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void
   onDragEnd?: () => void
   isTopPiece?: boolean
+  hasValidMoves?: boolean
   sx?: any // Allow additional styles to be passed in
 }
 
-export const HomePiece = ({ color, boardWidth, pointNumber, onDragStart, onDragEnd, isTopPiece = false, sx }: HomePieceProps) => {
+export const HomePiece = ({ 
+  color, 
+  boardWidth, 
+  pointNumber, 
+  onDragStart, 
+  onDragEnd, 
+  isTopPiece = false, 
+  hasValidMoves = true,
+  sx 
+}: HomePieceProps) => {
   // Calculate piece width to match regular pieces (6% of board width)
   const pieceWidth = `${boardWidth * 0.06}px`
   // Make the piece height thicker (12px instead of 8px)
@@ -78,14 +88,27 @@ export const HomePiece = ({ color, boardWidth, pointNumber, onDragStart, onDragE
         left: '50%',
         transform: 'translateX(-50%)',
         borderRadius: '4px',
-        cursor: 'grab',
+        cursor: hasValidMoves ? 'grab' : 'not-allowed',
         transition: 'all 0.2s ease-in-out',
         '&:active': {
-          cursor: 'grabbing',
+          cursor: hasValidMoves ? 'grabbing' : 'not-allowed',
+        },
+        '@keyframes shake': {
+          '0%, 100%': {
+            transform: 'translateX(-50%)',
+          },
+          '25%': {
+            transform: 'translateX(calc(-50% - 5px))',
+          },
+          '75%': {
+            transform: 'translateX(calc(-50% + 5px))',
+          },
         },
         ...(isTopPiece && {
-          '&:hover': {
+          '&:hover': hasValidMoves ? {
             boxShadow: `0 4px 8px ${color === 'white' ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.6)'}`,
+          } : {
+            animation: 'shake 0.4s ease-in-out',
           }
         }),
         ...sx // Merge in any additional styles

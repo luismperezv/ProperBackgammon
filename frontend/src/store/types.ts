@@ -6,6 +6,11 @@ export interface PointState {
   color: PlayerColor;
 }
 
+export interface DiceState {
+  values: number[] | null;
+  used_values: number[];
+}
+
 export interface GameState {
   points: { [key: number]: PointState | null };
   bar: {
@@ -16,22 +21,25 @@ export interface GameState {
     white: number;
     black: number;
   };
+  current_turn?: PlayerColor;
+  dice_state: DiceState;
 }
 
 export interface TimeControl {
   initialTime: number;      // Initial time in seconds
   increment: number;        // Time added after each move in seconds
-  timeLeft: {
+  isClockRunning: boolean;
+  activePlayer: PlayerColor | null;
+  remainingTime: {
     white: number;
     black: number;
   };
-  isClockRunning: boolean;
-  activePlayer: PlayerColor | null;
 }
 
 export interface Move {
   from: number;
   to: number;
+  color: PlayerColor;
 }
 
 export interface GameRules {

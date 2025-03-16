@@ -9,10 +9,19 @@ export interface StackProps {
   isTopRow?: boolean
   pointNumber: number
   boardWidth: number
+  hasValidMoves?: boolean
   onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void
 }
 
-export const Stack = ({ count, color, isTopRow = false, pointNumber, boardWidth, onDragStart }: StackProps) => {
+export const Stack = ({ 
+  count, 
+  color, 
+  isTopRow = false, 
+  pointNumber, 
+  boardWidth, 
+  hasValidMoves = true,
+  onDragStart 
+}: StackProps) => {
   const [isDragging, setIsDragging] = useState(false)
   const [tempCount, setTempCount] = useState(count)
   
@@ -96,6 +105,7 @@ export const Stack = ({ count, color, isTopRow = false, pointNumber, boardWidth,
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
             isTopPiece={isTopPiece}
+            hasValidMoves={hasValidMoves}
             sx={{
               position: 'absolute',
               ...position,
@@ -115,6 +125,7 @@ export const Stack = ({ count, color, isTopRow = false, pointNumber, boardWidth,
             onDragEnd={handleDragEnd}
             isTopPiece={isTopPiece}
             isTopRow={isTopRow}
+            hasValidMoves={hasValidMoves}
             sx={{
               position: 'absolute',
               ...position,

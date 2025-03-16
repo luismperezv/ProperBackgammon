@@ -1,15 +1,14 @@
-from fastapi import HTTPException, Request
+from fastapi import Request
 from fastapi.responses import JSONResponse
 from typing import Any, Dict, Optional
+from app.core.config import settings
 
 
-class AppError(HTTPException):
-    def __init__(
-        self, status_code: int, message: str, details: Optional[Dict[str, Any]] = None
-    ) -> None:
-        super().__init__(
-            status_code=status_code, detail={"message": message, "details": details}
-        )
+class AppError(Exception):
+    def __init__(self, status_code: int, message: str, details: dict = None):
+        self.status_code = status_code
+        self.message = message
+        self.details = details or {}
 
 
 class GameError(AppError):
@@ -33,4 +32,16 @@ class GameNotFoundError(GameError):
 
 
 async def error_handler(request: Request, exc: AppError) -> JSONResponse:
-    return JSONResponse(status_code=exc.status_code, content=exc.detail)
+    response = JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": exc.message,
+            "details": exc.details,
+        },
+    )
+    # Add CORS headers to error responses
+    response.headers["Access-Control-Allow-Origin"] = ", ".join(settings.BACKEND_CORS_ORIGINS)
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Allow-Methods"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    return response

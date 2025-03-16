@@ -82,6 +82,9 @@ async def api_root():
     }
 
 
+START_TIME = time.time()
+
+
 @app.get("/api/health")
 async def health_check():
     try:
@@ -95,9 +98,6 @@ async def health_check():
         raise AppError(
             status_code=500, message="Health check failed", details={"error": str(e)}
         )
-
-
-START_TIME = time.time()
 
 
 @app.get("/api/game")

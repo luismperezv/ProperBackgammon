@@ -9,11 +9,12 @@ export interface PieceProps {
   onDragEnd?: () => void
   isTopPiece?: boolean
   isTopRow?: boolean
+  hasValidMoves?: boolean
   sx?: any // Allow additional styles to be passed in
   children?: ReactNode
 }
 
-export const Piece = ({ color, pointNumber, boardWidth, onDragStart, onDragEnd, isTopPiece = false, isTopRow = false, sx, children }: PieceProps) => {
+export const Piece = ({ color, pointNumber, boardWidth, onDragStart, onDragEnd, isTopPiece = false, isTopRow = false, hasValidMoves = true, sx, children }: PieceProps) => {
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
     // Create a div element for the drag image
     const dragImage = document.createElement('div')
@@ -81,15 +82,28 @@ export const Piece = ({ color, pointNumber, boardWidth, onDragStart, onDragEnd, 
         left: '50%',
         transform: 'translateX(-50%)',
         zIndex: 1,
-        cursor: 'grab',
+        cursor: hasValidMoves ? 'grab' : 'not-allowed',
         transition: 'all 0.2s ease-in-out',
         '&:active': {
-          cursor: 'grabbing',
+          cursor: hasValidMoves ? 'grabbing' : 'not-allowed',
+        },
+        '@keyframes shake': {
+          '0%, 100%': {
+            transform: 'translateX(-50%)',
+          },
+          '25%': {
+            transform: 'translateX(calc(-50% - 5px))',
+          },
+          '75%': {
+            transform: 'translateX(calc(-50% + 5px))',
+          },
         },
         ...(isTopPiece && {
-          '[data-point]:hover &': {
+          '[data-point]:hover &': hasValidMoves ? {
             transform: `translateX(-50%) translateY(${isTopRow ? '8px' : '-8px'})`,
             boxShadow: `0 ${isTopRow ? '-8px' : '8px'} 16px ${color === 'white' ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.6)'}`,
+          } : {
+            animation: 'shake 0.4s ease-in-out',
           }
         }),
         display: 'flex',
